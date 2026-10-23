@@ -1,0 +1,73 @@
+{
+  "description": "Chain correctly signed by a different key; verified against the test key.",
+  "public_key": "fhiI2SByZBXfx9MAx1+RpbDKd1MWhjk0bZybDneDA4A=",
+  "prev_of_first": "0000000000000000000000000000000000000000000000000000000000000000",
+  "records": [
+    {
+      "s": 1,
+      "ts": 1761250000,
+      "k": "b",
+      "sig": "GgB+Yz3skFTvA6d7yBgsjoXkmd1zvzmu0EYuVb9wO3g10ai3WnAQo1YCFNOS/TnK4r5X4ikvxV+nqe23x4lZCg=="
+    },
+    {
+      "s": 2,
+      "ts": 1761250005,
+      "k": "r",
+      "t": 214,
+      "h": 482,
+      "sig": "zyQb4nrmn97oPKkJ3cbN9F1W820d0hOP+4f1h7TajcTI3HxNImIu5uhLyCPcXSkxZJ1kBdeFBOFFgsKyLxfOBQ=="
+    },
+    {
+      "s": 3,
+      "ts": 1761250605,
+      "k": "r",
+      "t": 212,
+      "h": 479,
+      "sig": "QbDRiEbQxhpetzcy8A5DGn96MiqlN8S88QUP73bBg8G+YiWSOXV3XKnrpX5OK3xvKR5xCnMRVmgrqVi/aZ6eCg=="
+    },
+    {
+      "s": 4,
+      "ts": 1761251205,
+      "k": "r",
+      "t": 209,
+      "h": 477,
+      "sig": "Mf80nRreNIyXxzzS1Ecra3JpdCCnXhWB2Wxk6d/FYx9qzz6NjmK5k5bRXL8zcCjDwSwER2/TaFeTIaMIKfkHBQ=="
+    },
+    {
+      "s": 5,
+      "ts": 1761251391,
+      "k": "i",
+      "g": 72,
+      "sig": "qh7S/MgXQvxqBaQik4PdB3LmYx/Mbwni2AYsmC/Rh39LbjUMDFvKJUZYLhFPQSh0p8XuAHoXi3AjKOVa62H1AQ=="
+    },
+    {
+      "s": 6,
+      "ts": 1761251805,
+      "k": "r",
+      "t": 207,
+      "h": 471,
+      "sig": "Ls9hBwxa9w0dxFM4xdyrCQcrcTwyjlkcmnQ/TVKDiO4mxrtQVsKeHazIcxt17cgc1krSBZ9YkhX51CYL4v+QAA=="
+    },
+    {
+      "s": 7,
+      "ts": 1761252044,
+      "k": "f",
+      "ms": 310,
+      "sig": "KlR47ONjfRjratPqp1lIjuCwxqGbHvBaZNBEe2HvmqJc0BEtxD566vGyX+c5t2tm959cQtXayXRh+8UIT0k7DA=="
+    },
+    {
+      "s": 8,
+      "ts": 1761252405,
+      "k": "r",
+      "t": -15,
+      "h": 350,
+      "sig": "1of22gN5xdhuBmxdByEvS82ESnFC8Gf1t2vHpYZptFHz+wqRQFhWnQGv4VSdl1mraQxOHYagAiuBjrKJtkRwAQ=="
+    }
+  ],
+  "expected": {
+    "status": "invalid",
+    "failed_at_index": 0,
+    "failed_at_seq": 1,
+    "reason": "signature"
+  }
+}

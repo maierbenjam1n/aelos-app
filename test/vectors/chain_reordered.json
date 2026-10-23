@@ -1,0 +1,73 @@
+{
+  "description": "Records s = 5 and s = 6 swapped.",
+  "public_key": "fhiI2SByZBXfx9MAx1+RpbDKd1MWhjk0bZybDneDA4A=",
+  "prev_of_first": "0000000000000000000000000000000000000000000000000000000000000000",
+  "records": [
+    {
+      "s": 1,
+      "ts": 1761250000,
+      "k": "b",
+      "sig": "OREkIQY/Fw4R65ozbLnXxBnCPaCLcIpqXH8A9kvFvXNZpVry6pyxU232r3dvM0cc46/1rNqc8ZXZ2kBKUIiADA=="
+    },
+    {
+      "s": 2,
+      "ts": 1761250005,
+      "k": "r",
+      "t": 214,
+      "h": 482,
+      "sig": "Cst4t8PlQx5FSOmXTUZFlDfbHlTalB3SN42bjW/mbShRGHb42QL2xRZdWM7cSf9gok8h2ul9d7d9mxGf+pklBA=="
+    },
+    {
+      "s": 3,
+      "ts": 1761250605,
+      "k": "r",
+      "t": 212,
+      "h": 479,
+      "sig": "KHRDFHn5TP8Lf8KUM3wqjjervezBplDQBLlYY+W22HaBtZ3pFRGAiWZ4NtYZPyeuRwHr3mMAWC/PKrlSIb4tAw=="
+    },
+    {
+      "s": 4,
+      "ts": 1761251205,
+      "k": "r",
+      "t": 209,
+      "h": 477,
+      "sig": "F8yZRwX8yDsKZiLrZHcxFz3GKW2Sy8tNEF2xq9QWs/O10B7drABZfl1Ne0oWIJVQ8b4cGODGpW661sXUvjPUCQ=="
+    },
+    {
+      "s": 6,
+      "ts": 1761251805,
+      "k": "r",
+      "t": 207,
+      "h": 471,
+      "sig": "PTY1VagyFL6bEXPyMixsdvUFnpMDaTUuqu7GuM3mrIrP3CfSajTgDx6DDXQlh+QHJuU6UY0lF4Gaet+lNnkxCA=="
+    },
+    {
+      "s": 5,
+      "ts": 1761251391,
+      "k": "i",
+      "g": 72,
+      "sig": "toAg5uNNQ+pNTIBfGFH3iIPEkWyNZOqX37nUdV2fiUt+PloAKOW3pTaoUV7Is1r9AwaEpVUxta3GVjUChBEYBg=="
+    },
+    {
+      "s": 7,
+      "ts": 1761252044,
+      "k": "f",
+      "ms": 310,
+      "sig": "6O4ZazpAT1Xvu+KSowvFeRTubI551fwvZKCIJfkpxPvHBYSV92drFbogWC+MDRDpcAkWcvSvxE71R8X1D/bnBA=="
+    },
+    {
+      "s": 8,
+      "ts": 1761252405,
+      "k": "r",
+      "t": -15,
+      "h": 350,
+      "sig": "vXT6aBxblysFG9rPs2i7BvDWwpN45ht/v4pBc9OK9ZbSb9aY1EFm0gss//3iyf6DZiVTa8PBnJjlXnDXb3zHAQ=="
+    }
+  ],
+  "expected": {
+    "status": "invalid",
+    "failed_at_index": 4,
+    "failed_at_seq": 6,
+    "reason": "sequence"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "warning": "TEST ONLY. Public seed for vectors, mock sensor and seed data.",
+  "seed_hex": "c5c6762f54a1b0e87fb768ad0095358c38272db92a9f8d2bd6b8fb4d0e43be74",
+  "public_key": "fhiI2SByZBXfx9MAx1+RpbDKd1MWhjk0bZybDneDA4A=",
+  "device_id": "1AFB",
+  "info": {
+    "id": "1AFB",
+    "fw": "0.1.0",
+    "pk": "fhiI2SByZBXfx9MAx1+RpbDKd1MWhjk0bZybDneDA4A="
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "description": "Valid chain starting at s = 4, as in an exported bundle. prev_of_first is the hash of record 3.",
+  "public_key": "fhiI2SByZBXfx9MAx1+RpbDKd1MWhjk0bZybDneDA4A=",
+  "prev_of_first": "786653d73a7964020b9087a75c3aae515bbc388062918caa9bfdc07a8069aba9",
+  "records": [
+    {
+      "s": 4,
+      "ts": 1761251205,
+      "k": "r",
+      "t": 209,
+      "h": 477,
+      "sig": "F8yZRwX8yDsKZiLrZHcxFz3GKW2Sy8tNEF2xq9QWs/O10B7drABZfl1Ne0oWIJVQ8b4cGODGpW661sXUvjPUCQ=="
+    },
+    {
+      "s": 5,
+      "ts": 1761251391,
+      "k": "i",
+      "g": 72,
+      "sig": "toAg5uNNQ+pNTIBfGFH3iIPEkWyNZOqX37nUdV2fiUt+PloAKOW3pTaoUV7Is1r9AwaEpVUxta3GVjUChBEYBg=="
+    },
+    {
+      "s": 6,
+      "ts": 1761251805,
+      "k": "r",
+      "t": 207,
+      "h": 471,
+      "sig": "PTY1VagyFL6bEXPyMixsdvUFnpMDaTUuqu7GuM3mrIrP3CfSajTgDx6DDXQlh+QHJuU6UY0lF4Gaet+lNnkxCA=="
+    },
+    {
+      "s": 7,
+      "ts": 1761252044,
+      "k": "f",
+      "ms": 310,
+      "sig": "6O4ZazpAT1Xvu+KSowvFeRTubI551fwvZKCIJfkpxPvHBYSV92drFbogWC+MDRDpcAkWcvSvxE71R8X1D/bnBA=="
+    },
+    {
+      "s": 8,
+      "ts": 1761252405,
+      "k": "r",
+      "t": -15,
+      "h": 350,
+      "sig": "vXT6aBxblysFG9rPs2i7BvDWwpN45ht/v4pBc9OK9ZbSb9aY1EFm0gss//3iyf6DZiVTa8PBnJjlXnDXb3zHAQ=="
+    }
+  ],
+  "expected": {
+    "status": "valid",
+    "failed_at_index": null,
+    "failed_at_seq": null,
+    "reason": null
+  }
+}
