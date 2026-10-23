@@ -2,6 +2,15 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: Seed data signed offline, displayed with a time offset
+`tools/gen_seed.py` signs 30 days of history per instrument (ending 2026-10-24T08:00Z) with fixed TEST keys, so every rehearsal is identical and startup does no signing. The violin's sensor uses the protocol TEST key so the mock can continue its chain (`test/sensor/mock_continues_seed_test.dart`). Signed timestamps can't change, so the UI shifts display times by `appStart - seed.endTime`, and the mock signs in that same shifted timeline. Seed chains are trusted at startup, not re-verified (about 8 s on 4 isolates). Photos are CC0 Met Museum images (`assets/photos/CREDITS.md`).
+
+### 2026-10-24: Mock sensor behaves like the Pi, plus demo-only controls
+`MockSensorConnection` follows the spec exactly (nothing before `sync`, paced replay, signed demo records). `simulateDisconnect()` and `simulateReconnect()` model going out of range: the sensor keeps recording, and `data/` must re-run `sendTime` + `sync(lastSeq + 1)` on reconnect. Demo commands work while disconnected (a real BLE write wouldn't) so "impact while you were away" can be staged. Added `fake_async` as a dev dependency for its timer tests. `dispose()` is on the mock only for now; add it to `SensorConnection` with the real transports.
+
+### 2026-10-24: Threshold engine is pure and stateless; alerts per episode
+`ThresholdEngine.evaluate(records, state)` returns alerts and a new state; `data/` keeps one state per instrument. Rates use the readings' timestamps, so 10-minute and 2-second data behave the same. Band and rate rules alert once per episode (when a violation starts or worsens), capped at one per rule per 30 minutes; impacts and free falls always alert. ×0.7 limits round to tenths (3.5 %/h, 7.0 %/24 h), and the age rule is "over 100 years" rather than a fixed year. Status = worst of the current band severity and rate/impact/fall alerts from the last 6 hours. All values in `assets/config/thresholds.json` are placeholders for a luthier to validate.
+
 ### 2026-10-24: Fonts bundled through pubspec, `google_fonts` dropped
 Static latin-subset TTFs of Cormorant Garamond (400/500/600, italics) and Inter (300–600) from Fontsource, declared in `pubspec.yaml`, with OFL licences in `assets/fonts/`. Works offline with no runtime lookup, and keeps OpenType `tnum` for tabular readings. Rejected: `google_fonts` (with bundled assets it adds nothing but file-name conventions), variable fonts (weight-axis handling is inconsistent across Flutter platforms).
 

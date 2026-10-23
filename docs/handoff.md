@@ -8,19 +8,21 @@ _Last updated 2026-10-24: step 2 in progress._
 - **Skeleton:** `pubspec.yaml`, lints, `.fvmrc`, `AppConfig`, domain models, `SensorConnection` interface, placeholder `main.dart`, platform folders (`android/`, `ios/`, `web/`; org `ch.aelos`). `flutter analyze` is clean, `flutter test` passes, and `flutter build web` works.
 - **Verification:** `domain/verification/` (canonical JSON, incremental and parallel chain verification) passes every test vector.
 - **Design system:** `lib/core/` (tokens, colours with enforced contrast, type, motion, shared widgets, f-hole motif). The style guide screen is the temporary home screen.
+- **Seed data:** three instruments with 30 days of signed history (`assets/seed/`, `tools/gen_seed.py`), CC0 photos, `domain/models/instrument.dart`, `data/seed/seed_loader.dart`.
+- **Mock sensor:** `sensor/mock/` follows the spec, continues the seeded violin chain, and has demo controls (impact, free fall, drying, disconnect/reconnect).
+- **Pairing screen:** `features/pairing/` (scan → link → key fingerprint). Not wired into navigation yet.
 - **Docs:** `AGENTS.md` (+ `CLAUDE.md` symlink), architecture, decisions, demo script (draft).
 
 ## Dev machine
 
 - fvm is in `~/fvm/bin` (not on `PATH` by default). The Flutter SDK is at `.fvm/flutter_sdk`.
-- Android SDK command-line tools are in `~/Android/Sdk`. No Android build has been tried yet: the SDK licences have to be accepted by a human first (`fvm flutter doctor --android-licenses`).
+- Android SDK is in `~/Android/Sdk` (platform 37, build-tools 36). Android Studio's JBR is at `~/android-studio/jbr`. The new Android CLI (`cmdline-tools/latest/bin/android`) replaces `sdkmanager`; pass `--no-metrics`. The first debug APK build is in progress (Gradle 9.3.1).
 - Android still needs Bluetooth and notification permissions in `AndroidManifest.xml` (see the `flutter_blue_plus` README). Add them with the BLE transport.
 
 ## In progress
 
-- `feat/seed-data` (agent): `tools/gen_seed.py`, `assets/seed/`, instrument photos, `domain/models/instrument.dart`, `data/seed/` loader.
-- `feat/thresholds` (agent): `domain/thresholds/`, `domain/history/gaps.dart`, `assets/config/thresholds.json`.
-- `feat/mock-sensor` (agent): `sensor/mock/`.
+- `feat/thresholds` (agent, PR #9): `domain/thresholds/`, `domain/history/`, `assets/config/thresholds.json`. Being changed to one alert per episode before merging.
+- `feat/onboarding` (agent): `features/onboarding/` (three illustrated pages, permissions page).
 
 ## Next (build step 2)
 
