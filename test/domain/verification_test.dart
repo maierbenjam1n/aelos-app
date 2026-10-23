@@ -122,4 +122,19 @@ void main() {
     expect(verifier.lastSeq, 3);
     expect(_toHex(verifier.prev), _vector('chain_partial')['prev_of_first']);
   });
+
+  test('a verifier continuing a stored chain enforces the next seq', () async {
+    final v = _vector('chain_valid');
+    final records =
+        (v['records']! as List<Object?>).cast<Map<String, Object?>>();
+    final publicKey = base64Decode(v['public_key']! as String);
+    ChainVerifier continuing() => ChainVerifier(
+          publicKey: publicKey,
+          prevOfFirst: recordHash(records[2]),
+          lastSeq: 3,
+        );
+
+    expect(await continuing().add(records[3]), isNull);
+    expect(await continuing().add(records[4]), ChainFailure.sequence);
+  });
 }

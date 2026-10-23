@@ -8,3 +8,6 @@ import 'package:cryptography/dart.dart';
 final Uint8List testKeySeed = Uint8List.fromList(
   const DartSha256().hashSync(utf8.encode('aelos test key - TEST ONLY')).bytes,
 );
+
+/// Device ID of [testKeySeed]'s public key (`device_id` in test/vectors/test_key.json).
+const testDeviceId = '1AFB';

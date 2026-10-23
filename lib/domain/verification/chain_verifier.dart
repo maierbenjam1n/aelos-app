@@ -51,7 +51,9 @@ const _requiredKeys = {
 /// Verifies records one at a time as they arrive, keeping the chain state
 /// between calls.
 final class ChainVerifier {
-  ChainVerifier({required this._publicKey, List<int>? prevOfFirst})
+  /// To continue a stored chain, pass the hash of its last record as
+  /// [prevOfFirst] and its sequence number as [lastSeq].
+  ChainVerifier({required this._publicKey, List<int>? prevOfFirst, this._lastSeq})
       : _prev = Uint8List.fromList(prevOfFirst ?? zeroPrev),
         _startsChain = _isZero(prevOfFirst);
 
@@ -81,7 +83,7 @@ final class ChainVerifier {
       _decodeSignature(record),
     );
     if (!ok) return ChainFailure.signature;
-    _prev = _hash(record);
+    _prev = recordHash(record);
     _lastSeq = seq;
     return null;
   }
@@ -117,7 +119,7 @@ Future<ChainResult> verifyChain(
     }
     messages.add(_signedMessage(prev, record));
     signatures.add(_decodeSignature(record));
-    prev = _hash(record);
+    prev = recordHash(record);
     lastSeq = seq;
   }
 
@@ -170,7 +172,8 @@ Uint8List _signedMessage(Uint8List prev, Map<String, Object?> record) {
     ..setAll(32, canonical);
 }
 
-Uint8List _hash(Map<String, Object?> record) => Uint8List.fromList(
+/// SHA-256 of the record's full form: the `prev` of the record after it.
+Uint8List recordHash(Map<String, Object?> record) => Uint8List.fromList(
       _sha256.hashSync(canonicalBytes(record, includeSig: true)).bytes,
     );
 
