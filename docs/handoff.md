@@ -1,12 +1,13 @@
 # Handoff
 
-_Last updated 2026-10-24: step 1 done, step 2 started (verification)._
+_Last updated 2026-10-24: step 2 in progress._
 
 ## State
 
 - **Protocol spec v1.0** (`docs/ble-protocol.md`) published with test vectors (`test/vectors/`) and a Python reference implementation (`tools/aelos_chain.py`). Ready to hand to the Pi developer.
 - **Skeleton:** `pubspec.yaml`, lints, `.fvmrc`, `AppConfig`, domain models, `SensorConnection` interface, placeholder `main.dart`, platform folders (`android/`, `ios/`, `web/`; org `ch.aelos`). `flutter analyze` is clean, `flutter test` passes, and `flutter build web` works.
 - **Verification:** `domain/verification/` (canonical JSON, incremental and parallel chain verification) passes every test vector.
+- **Design system:** `lib/core/` (tokens, colours with enforced contrast, type, motion, shared widgets, f-hole motif). The style guide screen is the temporary home screen.
 - **Docs:** `AGENTS.md` (+ `CLAUDE.md` symlink), architecture, decisions, demo script (draft).
 
 ## Dev machine
@@ -17,14 +18,15 @@ _Last updated 2026-10-24: step 1 done, step 2 started (verification)._
 
 ## In progress
 
-_Nothing claimed._
+- `feat/seed-data` (agent): `tools/gen_seed.py`, `assets/seed/`, instrument photos, `domain/models/instrument.dart`, `data/seed/` loader.
+- `feat/thresholds` (agent): `domain/thresholds/`, `domain/history/gaps.dart`, `assets/config/thresholds.json`.
+- `feat/mock-sensor` (agent): `sensor/mock/`.
 
 ## Next (build step 2)
 
-1. Design system in `lib/core/theme/`: tokens, type scale, motion durations. Bundle Cormorant Garamond and Inter into `assets/fonts/` and set `GoogleFonts.config.allowRuntimeFetching = false`.
-2. `tools/gen_seed.py` (reuse `aelos_chain.py`) and the seed loader in `data/seed/`.
-3. Mock sensor in `sensor/mock/`.
-4. Dashboard and instrument detail on the mock.
+1. `data/` repositories and providers wiring seed, mock sensor, verification and thresholds together.
+2. Dashboard and instrument detail on the mock (charts with the 40–60 % band and hatched gaps).
+3. Step 3 hero moments: impact alert takeover, "While you were away", verification seal.
 
 ## Known bugs
 
