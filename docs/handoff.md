@@ -42,4 +42,4 @@ None known.
 
 ## Repo notes
 
-- PRs: #1 `feat/ble-protocol` → `main`; #2 `feat/skeleton` (stacked on #1); #3 `feat/verification` (stacked on #2). Merge in that order.
+- Branch per task off `main`; merge PRs with `gh pr merge --merge --delete-branch` once analyze and tests pass. Avoid stacking PRs: deleting a merged base branch closes the PRs stacked on it (that happened to #2).
