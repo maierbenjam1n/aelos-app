@@ -18,6 +18,7 @@ fvm flutter run --dart-define=SENSOR=ws --dart-define=PI_HOST=192.168.1.42
 fvm flutter run --dart-define=SENSOR=ble
 fvm flutter analyze && fvm flutter test                        # must pass before a PR
 python3 tools/gen_test_vectors.py                              # needs pynacl; output is deterministic
+fvm flutter test test/screenshots --update-goldens --dart-define=SCREENSHOTS=true  # renders screens to build/screens/ for review
 ```
 
 ## Where things live
@@ -25,7 +26,7 @@ python3 tools/gen_test_vectors.py                              # needs pynacl; o
 | Path | What |
 | --- | --- |
 | `lib/main.dart`, `lib/main_portal.dart` | Phone app and web portal entry points |
-| `lib/core/` | Theme, shared widgets, `AppConfig` (dart-defines) |
+| `lib/core/` | Design system (tokens, colours, type, motion), shared widgets, `AppConfig`. See `lib/core/README.md` |
 | `lib/domain/` | Pure Dart (no Flutter): models, thresholds, verification, passport |
 | `lib/sensor/` | `SensorConnection` and its `ble/`, `ws/`, `mock/` implementations |
 | `lib/data/` | Seed loading and in-memory repositories |
