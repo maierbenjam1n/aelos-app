@@ -33,3 +33,7 @@ __pycache__/
 
 # FVM Version Cache
 .fvm/
+
+# Claude Code agent worktrees and local settings
+.claude/worktrees/
+.claude/settings.local.json
