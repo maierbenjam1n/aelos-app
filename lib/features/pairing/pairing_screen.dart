@@ -50,7 +50,22 @@ class _PairingScreenState extends State<PairingScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ScanningHalo(size: 280, active: state is! Paired),
+                      // The halo takes whatever height the heading leaves, up
+                      // to 280, so short phones never overflow.
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 280),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: LayoutBuilder(
+                              builder: (context, box) => ScanningHalo(
+                                size: box.biggest.shortestSide,
+                                active: state is! Paired,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: Space.xl),
                       _Heading(state),
                     ],
