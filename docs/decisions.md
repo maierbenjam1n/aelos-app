@@ -2,6 +2,15 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: Fonts bundled through pubspec, `google_fonts` dropped
+Static latin-subset TTFs of Cormorant Garamond (400/500/600, italics) and Inter (300–600) from Fontsource, declared in `pubspec.yaml`, with OFL licences in `assets/fonts/`. Works offline with no runtime lookup, and keeps OpenType `tnum` for tabular readings. Rejected: `google_fonts` (with bundled assets it adds nothing but file-name conventions), variable fonts (weight-axis handling is inconsistent across Flutter platforms).
+
+### 2026-10-24: Status colours split into mark, ink and tint
+WCAG: text 4.5:1, icons/marks 3:1. The brief's amber `#D9A35B` is only 2:1 on ivory, so light mode uses `#A06B24` for the attention mark and `#8F5A1E` for its text; the brief's pure colours remain as 16 % tints behind badges, and are used directly in dark mode where they pass. `test/core/contrast_test.dart` enforces this. Distinct icon shapes (circle-check, triangle, octagon) so status reads without colour.
+
+### 2026-10-24: Screenshots via golden tests into `build/screens/`
+Agents review visuals by rendering widgets with the real fonts in `flutter test` (opt-in with `--dart-define=SCREENSHOTS=true`). Output is gitignored; these are review images, not regression goldens.
+
 ### 2026-10-24: Verify signatures in parallel isolates, pure Dart
 Pure-Dart Ed25519 verify is about 2 ms per record on a desktop (both `cryptography`'s `DartEd25519` and `ed25519_edwards`; the latter is slower), so a 7-day bundle would take several seconds on a phone. `verifyChain` does the hash chain in one cheap sequential pass, then splits the signature checks across isolates: 0.32 s for 1,008 records on 8 isolates. Rejected: `cryptography_flutter` (Ed25519 is Apple-only, Android falls back to Dart); checking only the last signature (unsound: a record's hash excludes its own `prev`, so signatures don't vouch transitively); libsodium via FFI (native setup, no web).
 

@@ -1,0 +1,57 @@
+{
+  "warning": "TEST ONLY. Demo data signed with public keys; see tools/gen_seed.py.",
+  "endTs": 1792828800,
+  "instruments": [
+    {
+      "id": "violin-mittenwald",
+      "name": "Violin, Mittenwald 1890",
+      "type": "violin",
+      "maker": "Mittenwald workshop",
+      "origin": "Mittenwald, Bavaria",
+      "yearMade": 1890,
+      "era": null,
+      "topWood": "Spruce",
+      "backWood": "Flamed maple",
+      "varnish": "Oil varnish",
+      "crackRepairs": false,
+      "crackRepairNote": null,
+      "photo": "assets/photos/violin.jpg",
+      "sensorId": "1AFB",
+      "sensorPublicKey": "fhiI2SByZBXfx9MAx1+RpbDKd1MWhjk0bZybDneDA4A="
+    },
+    {
+      "id": "cello-mirecourt",
+      "name": "Cello, Mirecourt",
+      "type": "cello",
+      "maker": "Mirecourt workshop",
+      "origin": "Mirecourt, Vosges",
+      "yearMade": 1860,
+      "era": "c. 1860",
+      "topWood": "Spruce",
+      "backWood": "Maple",
+      "varnish": "Spirit varnish",
+      "crackRepairs": true,
+      "crackRepairNote": "Top crack beside the bass-side f-hole, cleated and repaired",
+      "photo": "assets/photos/cello.jpg",
+      "sensorId": "076C",
+      "sensorPublicKey": "8tEGSCFwV44wl5Z//BZjycQ13GfjuCIRJfBafMhp4Y4="
+    },
+    {
+      "id": "viola-cremona",
+      "name": "Viola, Cremona 2014",
+      "type": "viola",
+      "maker": "Contemporary workshop",
+      "origin": "Cremona, Italy",
+      "yearMade": 2014,
+      "era": null,
+      "topWood": "Spruce",
+      "backWood": "Maple",
+      "varnish": "Oil varnish",
+      "crackRepairs": false,
+      "crackRepairNote": null,
+      "photo": "assets/photos/viola.jpg",
+      "sensorId": "3B54",
+      "sensorPublicKey": "NabqglYG681jLjtBytSYBvG9IRtFX/ajK+nQMeUMyl4="
+    }
+  ]
+}
