@@ -1,23 +1,18 @@
 # Handoff
 
-_Last updated 2026-10-23, end of build step 1._
+_Last updated 2026-10-24, end of build step 1._
 
 ## State
 
 - **Protocol spec v1.0** (`docs/ble-protocol.md`) published with test vectors (`test/vectors/`) and a Python reference implementation (`tools/aelos_chain.py`). Ready to hand to the Pi developer.
-- **Skeleton:** `pubspec.yaml`, lints, `.fvmrc`, `AppConfig`, domain models, `SensorConnection` interface, placeholder `main.dart`. **Never compiled**: Flutter wasn't installed on the machine that wrote it.
+- **Skeleton:** `pubspec.yaml`, lints, `.fvmrc`, `AppConfig`, domain models, `SensorConnection` interface, placeholder `main.dart`, platform folders (`android/`, `ios/`, `web/`; org `ch.aelos`). `flutter analyze` is clean, `flutter test` passes, and `flutter build web` works.
 - **Docs:** `AGENTS.md` (+ `CLAUDE.md` symlink), architecture, decisions, demo script (draft).
 
-## First thing to do on a machine with Flutter
+## Dev machine
 
-```sh
-fvm install
-fvm flutter create --project-name aelos --org ch.aelos --platforms android,ios,web .
-rm test/widget_test.dart          # generated, references a MyApp that doesn't exist
-fvm flutter pub get && fvm flutter analyze
-```
-
-Then commit the generated `android/`, `ios/` and `web/` folders. Android needs Bluetooth and notification permissions in `AndroidManifest.xml` (see the `flutter_blue_plus` README).
+- fvm is in `~/fvm/bin` (not on `PATH` by default). The Flutter SDK is at `.fvm/flutter_sdk`.
+- Android SDK command-line tools are in `~/Android/Sdk`. No Android build has been tried yet: the SDK licences have to be accepted by a human first (`fvm flutter doctor --android-licenses`).
+- Android still needs Bluetooth and notification permissions in `AndroidManifest.xml` (see the `flutter_blue_plus` README). Add them with the BLE transport.
 
 ## In progress
 
@@ -33,7 +28,7 @@ _Nothing claimed._
 
 ## Known bugs
 
-None known (nothing runs yet).
+None known.
 
 ## Open issues with aelos-backend
 
@@ -42,4 +37,4 @@ None known (nothing runs yet).
 
 ## Repo notes
 
-- `origin` is `github.com:maierbenjam1n/aelos-app`. The SSH key on the dev machine authenticates as a different account (`MaierBenjamin`), which has no push access yet. Branches `feat/ble-protocol` → `feat/skeleton` (stacked) are local only until that's fixed.
+- Branches awaiting PRs: `feat/ble-protocol` → `main`, then `feat/skeleton` (stacked on it). Merge in that order.

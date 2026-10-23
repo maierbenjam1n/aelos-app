@@ -27,8 +27,8 @@ final class DemoCommand {
   Map<String, Object> toJson() => {
         'cmd': 'demo',
         'do': action.name,
-        if (tenthsG != null) 'g': tenthsG!,
-        if (freeFallMs != null) 'ms': freeFallMs!,
+        'g': ?tenthsG,
+        'ms': ?freeFallMs,
       };
 }
 
