@@ -6,8 +6,6 @@ build/
 .flutter-plugins-dependencies
 *.iml
 .idea/
-.fvm/flutter_sdk
-.fvm/versions
 
 # Android
 android/.gradle/
@@ -32,3 +30,6 @@ __pycache__/
 # OS / editors
 .DS_Store
 .vscode/
+
+# FVM Version Cache
+.fvm/
