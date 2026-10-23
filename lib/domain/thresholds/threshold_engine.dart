@@ -82,23 +82,30 @@ final class ThresholdEngine {
         ? config.humidityBand
         : config.temperatureBand;
     final severity = band.statusOf(value);
+    final episode = s._episodes[rule];
     if (severity == ConditionStatus.calm) {
-      s._activeBand.remove(rule);
+      _calm(s, rule, record.time);
       return;
     }
     final direction = value < band.warningBelow
         ? AlertDirection.below
         : AlertDirection.above;
-    final active = s._activeBand[rule];
-    s._activeBand[rule] = _Fired(record.time, severity, direction);
-    // A continuing violation fires once; only entering it, crossing to the
-    // other side or escalating to critical fires again.
-    if (active != null &&
-        active.direction == direction &&
-        severity.index <= active.severity.index) {
-      return;
+    // One alert per episode: when it starts, crosses to the other side of
+    // the band or escalates. Brief returns into the band don't end it.
+    final fire =
+        episode == null ||
+        episode.direction != direction ||
+        severity.index > episode.severity.index;
+    if (episode == null || episode.direction != direction) {
+      s._episodes[rule] = _Episode(direction, severity);
+    } else {
+      episode
+        ..calmSince = null
+        ..severity = severity.index > episode.severity.index
+            ? severity
+            : episode.severity;
     }
-    if (_debounced(s, rule, record.time, severity)) return;
+    if (!fire || _debounced(s, rule, record.time, severity)) return;
     s._lastAlert[rule] = _Fired(record.time, severity, direction);
     final limit = switch ((direction, severity)) {
       (AlertDirection.below, ConditionStatus.actNow) => band.criticalBelow!,
@@ -138,38 +145,72 @@ final class ThresholdEngine {
       metric,
       () => [for (final w in rateRule.windows) _Window(w.window)],
     );
+    final rule = metric.rateRule;
+    final time = record.time;
     final last = s._lastReading[metric];
     // Clock corrections can move `ts` backwards; start the windows afresh
     // rather than compute a change over a negative span.
-    if (last != null && record.time.isBefore(last)) {
+    if (last != null && time.isBefore(last)) {
       for (final w in windows) {
         w.clear();
       }
+      s._episodes.remove(rule);
+      s._horizons.remove(rule);
     }
-    s._lastReading[metric] = record.time;
+    s._lastReading[metric] = time;
 
-    final point = _Point(record.time, value, record.seq);
+    final point = _Point(time, value, record.seq);
     final factor = rateRule.tighterLimits && tighterLimits
         ? config.tighterLimits.humidityRateFactor
         : 1.0;
-    _Violation? violation;
+    final violations = <int, _Violation>{};
     for (var i = 0; i < windows.length; i++) {
       final change = windows[i].add(point);
       // Tenths are the sensor's resolution, so round the scaled limit to them.
       final limit = (rateRule.windows[i].maxChange * factor).round();
-      if (violation == null && change.size > limit) {
-        violation = _Violation(change, limit, rateRule.windows[i].window);
+      if (change.size > limit) {
+        violations[i] = _Violation(change, limit, rateRule.windows[i].window);
       }
     }
-    if (violation == null) return;
+    if (violations.isEmpty) {
+      _calm(s, rule, time);
+      return;
+    }
 
-    final rule = metric.rateRule;
+    // One excursion gives one alert, whichever window trips first. Each
+    // window keeps a horizon: the last time it was violated or reported. A
+    // change measured from a reading at or before the horizon is already
+    // covered: a fall that continues, the 24 h window catching up with a fall
+    // the 1 h window reported, or the 24 h window still spanning a past low
+    // after the recovery. While an episode is open, a change in the other
+    // direction is the recovery and doesn't alert. A fresh fall after a calm
+    // stretch does, even while a 24 h window keeps the episode open.
+    final horizons = s._horizons.putIfAbsent(
+      rule,
+      () => List.filled(windows.length, null),
+    );
+    final episode = s._episodes[rule]?..calmSince = null;
+    int? fresh;
+    for (final MapEntry(key: i, value: v) in violations.entries) {
+      final horizon = horizons[i];
+      if ((episode == null || _direction(v.change) == episode.direction) &&
+          (horizon == null || v.change.from.time.isAfter(horizon))) {
+        fresh = i;
+        break;
+      }
+    }
     final severity = rateRule.severity;
-    if (_debounced(s, rule, record.time, severity)) return;
-    final direction = violation.change.rising
-        ? AlertDirection.rising
-        : AlertDirection.falling;
-    s._lastAlert[rule] = _Fired(record.time, severity, direction);
+    final held = fresh != null && _debounced(s, rule, time, severity);
+    for (final i in violations.keys) {
+      // A capped excursion stays fresh so it can alert once the cap lapses.
+      if (!(held && i == fresh)) horizons[i] = time;
+    }
+    if (fresh == null || held) return;
+    horizons.fillRange(0, horizons.length, time);
+    final violation = violations[fresh]!;
+    final direction = _direction(violation.change);
+    s._episodes[rule] ??= _Episode(direction, severity);
+    s._lastAlert[rule] = _Fired(time, severity, direction);
     final text = _rateText(metric, violation, tightened: factor != 1.0);
     out.add(
       Alert(
@@ -226,6 +267,16 @@ final class ThresholdEngine {
     );
   }
 
+  /// Ends the rule's episode once readings have been within limits for
+  /// [ThresholdConfig.debounce].
+  void _calm(ThresholdState s, ThresholdRule rule, DateTime time) {
+    final episode = s._episodes[rule];
+    if (episode == null) return;
+    final since = episode.calmSince ??= time;
+    if (time.difference(since) >= config.debounce) s._episodes.remove(rule);
+  }
+
+  /// Caps alerts of one rule to one per [ThresholdConfig.debounce].
   bool _debounced(
     ThresholdState s,
     ThresholdRule rule,
@@ -249,7 +300,7 @@ final class ThresholdResult {
 }
 
 /// What the engine remembers between calls: recent readings for the rate
-/// windows, the last alert per rule (debounce) and ongoing band violations.
+/// windows, the last alert per rule (the 30 min cap) and open episodes.
 /// Opaque to callers; [ThresholdEngine.evaluate] never mutates its input.
 final class ThresholdState {
   ThresholdState.initial();
@@ -257,7 +308,8 @@ final class ThresholdState {
   final Map<_Metric, List<_Window>> _windows = {};
   final Map<_Metric, DateTime> _lastReading = {};
   final Map<ThresholdRule, _Fired> _lastAlert = {};
-  final Map<ThresholdRule, _Fired> _activeBand = {};
+  final Map<ThresholdRule, _Episode> _episodes = {};
+  final Map<ThresholdRule, List<DateTime?>> _horizons = {};
 
   ThresholdState _copy() => ThresholdState.initial()
     .._windows.addAll({
@@ -266,7 +318,12 @@ final class ThresholdState {
     })
     .._lastReading.addAll(_lastReading)
     .._lastAlert.addAll(_lastAlert)
-    .._activeBand.addAll(_activeBand);
+    .._episodes.addAll({
+      for (final e in _episodes.entries) e.key: e.value.copy(),
+    })
+    .._horizons.addAll({
+      for (final e in _horizons.entries) e.key: List.of(e.value),
+    });
 }
 
 enum _Metric {
@@ -286,6 +343,23 @@ final class _Fired {
   final ConditionStatus severity;
   final AlertDirection direction;
 }
+
+/// An ongoing band or rate violation (see [ThresholdEngine._band] and
+/// [ThresholdEngine._rate]).
+final class _Episode {
+  _Episode(this.direction, this.severity);
+
+  final AlertDirection direction;
+  ConditionStatus severity;
+
+  /// First reading back within limits, or null while still violated.
+  DateTime? calmSince;
+
+  _Episode copy() => _Episode(direction, severity)..calmSince = calmSince;
+}
+
+AlertDirection _direction(_Change change) =>
+    change.rising ? AlertDirection.rising : AlertDirection.falling;
 
 final class _Point {
   const _Point(this.time, this.value, this.seq);
@@ -440,9 +514,10 @@ _Text _rateText(_Metric metric, _Violation v, {required bool tightened}) {
   final why =
       '${humidity ? 'Humidity' : 'Temperature'} $verb '
       '${_fmt(v.change.size)} $unit ${_windowPhrase(v.window)}.$limitNote';
+  final trend = v.change.rising ? 'rising' : 'falling';
   if (humidity) {
     return (
-      'Humidity is changing quickly',
+      'Humidity is $trend quickly',
       why,
       v.change.rising
           ? 'Keep the case closed and away from damp air; check the '
@@ -451,7 +526,7 @@ _Text _rateText(_Metric metric, _Violation v, {required bool tightened}) {
     );
   }
   return (
-    'Temperature is changing quickly',
+    'Temperature is $trend quickly',
     why,
     'Keep the case closed so the instrument can adjust slowly.',
   );

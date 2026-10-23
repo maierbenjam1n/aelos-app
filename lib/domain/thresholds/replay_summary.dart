@@ -12,7 +12,7 @@ final class ReplayGroup {
 
   final ThresholdRule rule;
 
-  /// Below/above for bands (dry vs. humid spell); null otherwise.
+  /// Side of the band (dry vs. humid spell) or rate direction; null for events.
   final AlertDirection? direction;
   final List<Alert> alerts;
 
@@ -42,13 +42,21 @@ final class ReplayGroup {
         'cold spells',
       ),
       (ThresholdRule.temperatureBand, _) => ('a warm spell', 'warm spells'),
+      (ThresholdRule.humidityRate, AlertDirection.rising) => (
+        'a quick rise in humidity',
+        'quick rises in humidity',
+      ),
       (ThresholdRule.humidityRate, _) => (
-        'a quick humidity change',
-        'quick humidity changes',
+        'a quick drop in humidity',
+        'quick drops in humidity',
+      ),
+      (ThresholdRule.temperatureRate, AlertDirection.rising) => (
+        'a quick rise in temperature',
+        'quick rises in temperature',
       ),
       (ThresholdRule.temperatureRate, _) => (
-        'a quick temperature change',
-        'quick temperature changes',
+        'a quick drop in temperature',
+        'quick drops in temperature',
       ),
     };
     return count == 1 ? one : '$count $many';
@@ -127,11 +135,9 @@ ReplaySummary? summarizeReplay(Iterable<Alert> alerts) {
   if (list.isEmpty) return null;
   final byKey = <(ThresholdRule, AlertDirection?), List<Alert>>{};
   for (final a in list) {
-    // Rate alerts group regardless of direction; bands split dry vs. humid.
-    final banded =
-        a.rule == ThresholdRule.humidityBand ||
-        a.rule == ThresholdRule.temperatureBand;
-    byKey.putIfAbsent((a.rule, banded ? a.direction : null), () => []).add(a);
+    // Each band or rate alert is one episode; dry and humid spells, drops
+    // and rises are counted apart.
+    byKey.putIfAbsent((a.rule, a.direction), () => []).add(a);
   }
   final groups =
       [

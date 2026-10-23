@@ -64,6 +64,20 @@ List<Alert> run(
 
 const old = ThresholdProfile(yearMade: 1890);
 
+/// Readings 10 minutes apart from [t0].
+List<SensorRecord> series(List<int> humidity) => [
+  for (var i = 0; i < humidity.length; i++)
+    reading(min(10 * i), h: humidity[i]),
+];
+
+List<Alert> rateAlerts(
+  List<SensorRecord> records, {
+  ThresholdProfile profile = const ThresholdProfile(),
+}) => run(
+  records,
+  profile: profile,
+).where((a) => a.rule == ThresholdRule.humidityRate).toList();
+
 void main() {
   setUp(() => _seq = 0);
 
@@ -205,10 +219,12 @@ void main() {
         for (var i = 0; i <= 120; i++)
           reading(min(10 * i), h: 520 - i * 110 ~/ 120),
       ]);
-      expect(alerts, isNotEmpty);
-      expect(alerts.first.time, t0.add(min(10 * 111)));
-      expect(alerts.first.why, 'Humidity fell 10.1 % in the last 24 hours.');
-      expect(alerts.every((a) => a.rule == ThresholdRule.humidityRate), isTrue);
+      // One episode, one alert, although the window stays over the limit.
+      final alert = alerts.single;
+      expect(alert.rule, ThresholdRule.humidityRate);
+      expect(alert.time, t0.add(min(10 * 111)));
+      expect(alert.why, 'Humidity fell 10.1 % in the last 24 hours.');
+      expect(alert.title, 'Humidity is falling quickly');
     });
 
     test('×0.7 for instruments over 100 years old', () {
@@ -357,7 +373,7 @@ void main() {
     });
   });
 
-  group('debounce', () {
+  group('episodes', () {
     test('band: violations 10 minutes apart give one alert', () {
       final alerts = run([
         reading(Duration.zero, h: 390),
@@ -367,46 +383,130 @@ void main() {
       expect(alerts, hasLength(1));
     });
 
-    test('band: violations 40 minutes apart give two alerts', () {
+    test('band: 30 minutes back in band ends the episode', () {
       final alerts = run([
         reading(Duration.zero, h: 390),
-        reading(min(20), h: 410),
+        reading(min(5), h: 410),
+        reading(min(35), h: 410),
         reading(min(40), h: 390),
       ]);
-      expect(alerts, hasLength(2));
+      expect(alerts.map((a) => a.time), [t0, t0.add(min(40))]);
       expect(alerts.map((a) => a.id).toSet(), {'violin:humidity_band'});
     });
 
-    test('rate: violations 10 minutes apart give one alert', () {
+    test('band: 20 minutes back in band does not', () {
       final alerts = run([
-        reading(Duration.zero, h: 480),
-        reading(min(10), h: 540),
-        reading(min(20), h: 480),
-      ]).where((a) => a.rule == ThresholdRule.humidityRate);
+        reading(Duration.zero, h: 390),
+        reading(min(10), h: 410),
+        reading(min(20), h: 410),
+        reading(min(30), h: 390),
+      ]);
       expect(alerts, hasLength(1));
     });
 
-    test('rate: violations 40 minutes apart give two alerts', () {
+    test('band: crossing to the other side is a new alert', () {
       final alerts = run([
-        reading(Duration.zero, h: 480),
-        reading(min(10), h: 540),
-        reading(min(50), h: 480),
-      ]).where((a) => a.rule == ThresholdRule.humidityRate).toList();
+        reading(Duration.zero, h: 390, t: 140),
+        reading(min(40), h: 390, t: 310),
+      ]).where((a) => a.rule == ThresholdRule.temperatureBand);
+      expect(alerts.map((a) => a.direction), [
+        AlertDirection.below,
+        AlertDirection.above,
+      ]);
+    });
+
+    test('rate: 3 hours of continuous fast change give one alert', () {
+      final tenMinutes = rateAlerts(
+        series([for (var i = 0; i <= 18; i++) 600 - 10 * i]),
+      );
+      expect(tenMinutes.map((a) => a.time), [t0.add(min(60))]);
+      _seq = 0;
+      final live = rateAlerts([
+        for (var s = 0; s <= 3 * 3600; s += 2)
+          reading(Duration(seconds: s), h: 600 - s ~/ 60),
+      ]);
+      expect(live.map((a) => a.time), [t0.add(min(51))]);
+    });
+
+    test('rate: drop, 2 hours stable, drop again give two alerts', () {
+      final alerts = rateAlerts(
+        series([
+          for (var i = 0; i <= 6; i++) 520 - 10 * i,
+          for (var i = 0; i < 12; i++) 460,
+          for (var i = 1; i <= 6; i++) 460 - 10 * i,
+        ]),
+      );
+      expect(alerts.map((a) => a.direction), [
+        AlertDirection.falling,
+        AlertDirection.falling,
+      ]);
+      expect(alerts.map((a) => a.time), [
+        t0.add(min(60)),
+        t0.add(min(10 * 24)),
+      ]);
+    });
+
+    test('rate: a second drop alerts while the 24 h window is still over', () {
+      // Tighter limits (3.5 %/h, 7 %/24 h): the first drop of 8 % keeps the
+      // 24 h window over its limit for the rest of the test.
+      final alerts = rateAlerts(
+        series([
+          for (var i = 0; i <= 8; i++) 560 - 10 * i,
+          for (var i = 0; i < 12; i++) 480,
+          for (var i = 1; i <= 5; i++) 480 - 10 * i,
+        ]),
+        profile: old,
+      );
       expect(alerts, hasLength(2));
-      expect(alerts.last.direction, AlertDirection.falling);
+      expect(
+        alerts.last.why,
+        startsWith('Humidity fell 4.0 % in the last hour.'),
+      );
+    });
+
+    test('rate: a recovery right after a drop does not alert again', () {
+      final alerts = rateAlerts(
+        series([
+          for (var i = 0; i <= 6; i++) 520 - 10 * i,
+          for (var i = 1; i <= 6; i++) 460 + 10 * i,
+          for (var i = 0; i < 24; i++) 520,
+        ]),
+        profile: old,
+      );
+      expect(alerts.map((a) => a.direction), [AlertDirection.falling]);
+    });
+
+    test('rate: a rise after the episode has ended is a new episode', () {
+      final alerts = rateAlerts(
+        series([
+          for (var i = 0; i <= 6; i++) 520 - 10 * i,
+          for (var i = 0; i < 12; i++) 460,
+          for (var i = 1; i <= 6; i++) 460 + 10 * i,
+        ]),
+      );
+      expect(alerts.map((a) => a.direction), [
+        AlertDirection.falling,
+        AlertDirection.rising,
+      ]);
+      expect(alerts.last.title, 'Humidity is rising quickly');
     });
 
     test('state carries across calls without being mutated', () {
       final e = engine();
-      final first = e.evaluate([
-        reading(Duration.zero, h: 480),
-        reading(min(10), h: 540),
-      ]);
+      final first = e.evaluate(
+        series([for (var i = 0; i <= 6; i++) 520 - 10 * i]),
+      );
       expect(first.alerts, hasLength(1));
-      final next = [reading(min(20), h: 480), reading(min(50), h: 420)];
-      final a = e.evaluate(next, first.state).alerts;
-      final b = e.evaluate(next, first.state).alerts;
-      expect(a.map((x) => x.time), [t0.add(min(50))]);
+      final continued = [reading(min(70), h: 450), reading(min(80), h: 440)];
+      expect(e.evaluate(continued, first.state).alerts, isEmpty);
+      final later = [
+        for (var i = 7; i <= 18; i++) reading(min(10 * i), h: 460),
+        for (var i = 1; i <= 6; i++)
+          reading(min(180 + 10 * i), h: 460 - 10 * i),
+      ];
+      final a = e.evaluate(later, first.state).alerts;
+      final b = e.evaluate(later, first.state).alerts;
+      expect(a.map((x) => x.time), [t0.add(min(240))]);
       expect(b.map((x) => x.time), a.map((x) => x.time));
     });
 
