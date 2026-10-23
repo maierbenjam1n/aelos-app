@@ -9,8 +9,17 @@ import '../support/fake_sensor_connection.dart';
 
 Widget _app(Widget home) => MaterialApp(theme: AelosTheme.dark, home: home);
 
+/// A small phone (360×640): the layout must fit without overflow.
+void _phone(WidgetTester tester) {
+  tester.view
+    ..physicalSize = const Size(1080, 1920)
+    ..devicePixelRatio = 3;
+  addTearDown(tester.view.reset);
+}
+
 void main() {
   testWidgets('scan, pick a sensor, link it and continue', (tester) async {
+    _phone(tester);
     final connection = FakeSensorConnection();
     DeviceInfo? paired;
     await tester.pumpWidget(
@@ -37,6 +46,7 @@ void main() {
   });
 
   testWidgets('a failed connection offers a retry', (tester) async {
+    _phone(tester);
     await tester.pumpWidget(
       _app(PairingScreen(connection: FakeSensorConnection(failConnect: true), onPaired: (_) {})),
     );
