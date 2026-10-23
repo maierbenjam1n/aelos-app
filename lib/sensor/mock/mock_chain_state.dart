@@ -1,9 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:cryptography/dart.dart';
 
 import '../../domain/models/sensor_record.dart';
-import '../../domain/verification/canonical_json.dart';
+import '../../domain/verification/chain_verifier.dart';
 
 /// What a sensor has persisted between runs (docs/ble-protocol.md 5.3): the
 /// last sequence number, the last record's hash, and its stored records.
@@ -32,7 +31,7 @@ final class MockChainState {
         throw ArgumentError('records must be contiguous and end at lastSeq');
       }
     }
-    final expected = recordHash(records.last);
+    final expected = recordHash(records.last.json);
     for (var i = 0; i < 32; i++) {
       if (expected[i] != lastHash[i]) {
         throw ArgumentError('lastHash does not match the last record');
@@ -50,7 +49,7 @@ final class MockChainState {
       ? MockChainState.fresh()
       : MockChainState(
           lastSeq: records.last.seq,
-          lastHash: recordHash(records.last),
+          lastHash: recordHash(records.last.json),
           records: records,
         );
 
@@ -61,10 +60,3 @@ final class MockChainState {
   /// Lowest sequence number a `sync` can replay.
   int get firstStoredSeq => records.isEmpty ? lastSeq + 1 : records.first.seq;
 }
-
-/// SHA-256 of a record's full form: `prev` of the record after it.
-Uint8List recordHash(SensorRecord record) => Uint8List.fromList(
-  const DartSha256()
-      .hashSync(canonicalBytes(record.json, includeSig: true))
-      .bytes,
-);

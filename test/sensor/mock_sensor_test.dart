@@ -421,7 +421,7 @@ void main() {
       final vectors = _vectorRecords();
       final state = MockChainState(
         lastSeq: 8,
-        lastHash: recordHash(vectors.last),
+        lastHash: recordHash(vectors.last.json),
       );
       late List<SensorRecord> received;
       fakeAsync((async) {

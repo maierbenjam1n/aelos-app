@@ -50,13 +50,11 @@ Records go through the chain verifier one by one (`prev` is kept per device) bef
 
 Transport selection: `AppConfig.initialTransport` from `--dart-define=SENSOR`, switchable at runtime from the demo panel by replacing the `SensorConnection` provider.
 
-## Providers (planned)
+## Providers
 
-- `sensorConnectionProvider`: the active transport.
-- `instrumentsProvider`: list for the dashboard.
-- `instrumentProvider(id)`, `liveReadingProvider(id)`, `recordsProvider(id)`, `alertsProvider`.
+See `lib/data/README.md`. In short: `instrumentsProvider` / `instrumentProvider(id)` (history, alerts, status), `sessionProvider` (live sensor: status, live reading, demo controls), `alertEventsProvider` (live alerts), `awaySummaryProvider` (reconnect card), `transportProvider` / `sensorConnectionProvider`. Riverpod 3 without code generation: `Provider`, `NotifierProvider`, `AsyncNotifierProvider`, `FutureProvider`, `StreamProvider`.
 
-Use plain `Provider`, `NotifierProvider` and `StreamProvider` (Riverpod 3, no codegen). Update this list when the providers exist.
+**Time:** signed timestamps of seeded and mock records are shifted for display (`InstrumentData.displayTime`) so the seeded history ends "now".
 
 ## Verification
 

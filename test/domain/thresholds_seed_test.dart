@@ -26,8 +26,10 @@ void main() {
         year: seed.endTime.year,
       );
       alerts[i.id] = engine.evaluate(s.records).alerts;
-      // ignore: avoid_print
-      for (final a in alerts[i.id]!) print('${i.id} ${a.time.toIso8601String()} ${a.severity.name} ${a.title} — ${a.why}');
+      for (final a in alerts[i.id]!) {
+        // ignore: avoid_print
+        print('${i.id} ${a.time.toIso8601String()} ${a.severity.name} ${a.title} — ${a.why}');
+      }
     }
 
     final violin = alerts['violin-mittenwald']!;
