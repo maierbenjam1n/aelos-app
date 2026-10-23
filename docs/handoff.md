@@ -1,11 +1,12 @@
 # Handoff
 
-_Last updated 2026-10-24, end of build step 1._
+_Last updated 2026-10-24: step 1 done, step 2 started (verification)._
 
 ## State
 
 - **Protocol spec v1.0** (`docs/ble-protocol.md`) published with test vectors (`test/vectors/`) and a Python reference implementation (`tools/aelos_chain.py`). Ready to hand to the Pi developer.
 - **Skeleton:** `pubspec.yaml`, lints, `.fvmrc`, `AppConfig`, domain models, `SensorConnection` interface, placeholder `main.dart`, platform folders (`android/`, `ios/`, `web/`; org `ch.aelos`). `flutter analyze` is clean, `flutter test` passes, and `flutter build web` works.
+- **Verification:** `domain/verification/` (canonical JSON, incremental and parallel chain verification) passes every test vector.
 - **Docs:** `AGENTS.md` (+ `CLAUDE.md` symlink), architecture, decisions, demo script (draft).
 
 ## Dev machine
@@ -21,14 +22,18 @@ _Nothing claimed._
 ## Next (build step 2)
 
 1. Design system in `lib/core/theme/`: tokens, type scale, motion durations. Bundle Cormorant Garamond and Inter into `assets/fonts/` and set `GoogleFonts.config.allowRuntimeFetching = false`.
-2. `domain/verification/`: canonical JSON and chain verifier, with tests against every `test/vectors/*.json` file.
-3. `tools/gen_seed.py` (reuse `aelos_chain.py`) and the seed loader in `data/seed/`.
-4. Mock sensor in `sensor/mock/`.
-5. Dashboard and instrument detail on the mock.
+2. `tools/gen_seed.py` (reuse `aelos_chain.py`) and the seed loader in `data/seed/`.
+3. Mock sensor in `sensor/mock/`.
+4. Dashboard and instrument detail on the mock.
 
 ## Known bugs
 
 None known.
+
+## To measure
+
+- Verification speed on the demo phone: run `verifyChain` over a 7-day bundle with `isolates: Platform.numberOfProcessors`. The desktop does it in 0.32 s. If the phone takes over ~1.5 s, shorten the default export range.
+- Web portal (phase two): pure-Dart Ed25519 compiled to JS and limited to one thread may be slow. Consider Web Crypto Ed25519 there.
 
 ## Open issues with aelos-backend
 
@@ -37,4 +42,4 @@ None known.
 
 ## Repo notes
 
-- Branches awaiting PRs: `feat/ble-protocol` → `main`, then `feat/skeleton` (stacked on it). Merge in that order.
+- PRs: #1 `feat/ble-protocol` → `main`; #2 `feat/skeleton` (stacked on #1); #3 `feat/verification` (stacked on #2). Merge in that order.
