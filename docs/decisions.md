@@ -2,6 +2,9 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: Verify signatures in parallel isolates, pure Dart
+Pure-Dart Ed25519 verify is about 2 ms per record on a desktop (both `cryptography`'s `DartEd25519` and `ed25519_edwards`; the latter is slower), so a 7-day bundle would take several seconds on a phone. `verifyChain` does the hash chain in one cheap sequential pass, then splits the signature checks across isolates: 0.32 s for 1,008 records on 8 isolates. Rejected: `cryptography_flutter` (Ed25519 is Apple-only, Android falls back to Dart); checking only the last signature (unsound: a record's hash excludes its own `prev`, so signatures don't vouch transitively); libsodium via FFI (native setup, no web).
+
 ### 2026-10-23: Explicit `sync` command for record replay
 App writes `{"cmd":"sync","from":n}` after subscribing to `records`; the sensor sends nothing on `records` before that. BLE notifications are unacknowledged, so the sensor cannot know what was "undelivered"; the app knows exactly which sequence numbers it holds. Rejected: sensor-side delivery tracking (loses records on a dropped link), indications (slow, harder in `bless`). Adds `sync()` to `SensorConnection`.
 
