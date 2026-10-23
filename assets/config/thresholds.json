@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "note": "Every value in this file is a placeholder, to be validated by a luthier.",
+  "debounce_minutes": 30,
+  "status_window_hours": 6,
+  "tighter_limits": {
+    "older_than_years": 100,
+    "crack_repairs": true,
+    "humidity_rate_factor": 0.7,
+    "note": "placeholder, to be validated by a luthier"
+  },
+  "rules": {
+    "humidity_band": {
+      "unit": "% RH",
+      "warning_below": 40,
+      "warning_above": 60,
+      "critical_below": 35,
+      "critical_above": 70,
+      "note": "placeholder, to be validated by a luthier"
+    },
+    "humidity_rate": {
+      "unit": "% RH",
+      "severity": "warning",
+      "windows": [
+        { "hours": 1, "max_change": 5 },
+        { "hours": 24, "max_change": 10 }
+      ],
+      "tighter_limits": true,
+      "note": "placeholder, to be validated by a luthier"
+    },
+    "temperature_band": {
+      "unit": "°C",
+      "warning_below": 15,
+      "warning_above": 30,
+      "critical_below": null,
+      "critical_above": null,
+      "note": "placeholder, to be validated by a luthier"
+    },
+    "temperature_rate": {
+      "unit": "°C",
+      "severity": "warning",
+      "windows": [
+        { "hours": 1, "max_change": 5 }
+      ],
+      "tighter_limits": false,
+      "note": "placeholder, to be validated by a luthier"
+    },
+    "impact": {
+      "unit": "g",
+      "warning_at": 3.0,
+      "critical_at": 6.0,
+      "note": "placeholder, to be validated by a luthier"
+    },
+    "free_fall": {
+      "unit": "ms",
+      "warning_at": null,
+      "critical_at": 150,
+      "note": "placeholder, to be validated by a luthier"
+    }
+  }
+}
