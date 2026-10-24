@@ -52,6 +52,57 @@
       "photo": "assets/photos/viola.jpg",
       "sensorId": "3B54",
       "sensorPublicKey": "NabqglYG681jLjtBytSYBvG9IRtFX/ajK+nQMeUMyl4="
+    },
+    {
+      "id": "violin-markneukirchen",
+      "name": "¾ Violin, Markneukirchen",
+      "type": "violin",
+      "maker": "Markneukirchen workshop",
+      "origin": "Markneukirchen, Saxony",
+      "yearMade": 1925,
+      "era": "c. 1925",
+      "topWood": "Spruce",
+      "backWood": "Maple",
+      "varnish": "Spirit varnish",
+      "crackRepairs": false,
+      "crackRepairNote": null,
+      "photo": "assets/photos/violin.jpg",
+      "sensorId": "20DF",
+      "sensorPublicKey": "Fa9P/lwZn5HjxSe12nN8u7ew7YPM9JRuXx75wQJW0ys="
+    },
+    {
+      "id": "cello-brunner",
+      "name": "Cello, Atelier Brunner 2019",
+      "type": "cello",
+      "maker": "Atelier Brunner",
+      "origin": "Luzern, Switzerland",
+      "yearMade": 2019,
+      "era": null,
+      "topWood": "Spruce",
+      "backWood": "Flamed maple",
+      "varnish": "Oil varnish",
+      "crackRepairs": false,
+      "crackRepairNote": null,
+      "photo": "assets/photos/cello.jpg",
+      "sensorId": "2A87",
+      "sensorPublicKey": "N0/mfjgbSqGQ7V0ANhAsQVbsBquAor+SCzLs1jTOsn8="
+    },
+    {
+      "id": "violin-mirecourt",
+      "name": "Violin, Mirecourt",
+      "type": "violin",
+      "maker": "Mirecourt workshop",
+      "origin": "Mirecourt, Vosges",
+      "yearMade": 1900,
+      "era": "c. 1900",
+      "topWood": "Spruce",
+      "backWood": "One-piece maple",
+      "varnish": "Spirit varnish",
+      "crackRepairs": false,
+      "crackRepairNote": null,
+      "photo": "assets/photos/violin.jpg",
+      "sensorId": "9A3C",
+      "sensorPublicKey": "nTlxKaYX9Jyq3toUFngXSDhmZ88MjNIaoQLVDV0G/ds="
     }
   ]
 }

@@ -59,6 +59,27 @@ abstract final class DemoDirectory {
       since: DateTime.utc(2026, 8, 15),
       plan: 'Monthly rental',
     ),
+    Rental(
+      instrumentId: 'violin-markneukirchen',
+      luthierId: brunner.id,
+      renterId: 'sofia-bianchi',
+      renterName: 'Sofia Bianchi',
+      since: DateTime.utc(2026, 9, 7),
+      plan: 'Student rental · size exchange',
+    ),
+    Rental(
+      instrumentId: 'cello-brunner',
+      luthierId: brunner.id,
+      renterId: 'jonas-frei',
+      renterName: 'Jonas Frei',
+      since: DateTime.utc(2026, 6, 20),
+      plan: 'Rent to own · 36 months',
+    ),
+    Rental(
+      instrumentId: 'violin-mirecourt',
+      luthierId: brunner.id,
+      plan: 'Monthly rental · purchase option',
+    ),
   ];
 }
 
