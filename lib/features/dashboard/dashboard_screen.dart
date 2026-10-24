@@ -14,6 +14,7 @@ import '../../core/widgets/f_hole.dart';
 import '../../core/widgets/hairline.dart';
 import '../../core/widgets/reading_value.dart';
 import '../../core/widgets/status_badge.dart';
+import '../../data/accounts.dart';
 import '../../data/instrument_data.dart';
 import '../../data/instruments_notifier.dart';
 import '../../data/sensor_session.dart';
@@ -27,7 +28,6 @@ import '../register/registration_flow.dart';
 import '../style_guide/style_guide_screen.dart';
 import 'instrument_detail_screen.dart';
 
-const _demoInstrumentId = 'violin-mittenwald';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -37,28 +37,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  String? _startupError;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => unawaited(_startDemo()),
-    );
-  }
-
-  Future<void> _startDemo() async {
-    try {
-      await ref.read(instrumentsProvider.future);
-      if (!mounted) return;
-      await ref.read(sessionProvider.notifier).start(_demoInstrumentId);
-    } on Object catch (error) {
-      if (!mounted) return;
-      setState(() => _startupError = error.toString());
-      debugPrint('Could not start the demo sensor: $error');
-    }
-  }
-
   void _openStyleGuide() {
     Navigator.of(context).push<void>(
       MaterialPageRoute<void>(builder: (_) => const StyleGuideScreen()),
@@ -145,11 +123,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ],
       ),
       body: instruments.when(
-        data: (items) => _DashboardBody(
-          instruments: items,
+        data: (_) => _DashboardBody(
+          instruments: ref.watch(visibleInstrumentsProvider),
           session: session,
           awaySummary: awaySummary,
-          startupError: _startupError,
+          startupError: null,
           onDismissAwaySummary: ref.read(awaySummaryProvider.notifier).dismiss,
           onAddInstrument: _openRegistration,
         ),
