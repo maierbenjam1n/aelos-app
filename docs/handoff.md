@@ -34,5 +34,6 @@ _Last updated 2026-10-24: the complete per-instrument audit log is connected._
 
 ## Demo machine
 
+- **Android build:** `fvm flutter build apk --debug` works (first build ~16 min). Gradle needs NDK 28.2; the deprecated `sdkmanager` shim hangs when Gradle calls it, so install SDK packages yourself: `~/Android/Sdk/cmdline-tools/latest/bin/android --no-metrics sdk install "ndk;28.2.13676358" < /dev/null`.
 - FVM is at `~/fvm/bin` and the pinned Flutter SDK is 3.47.8. Android SDK is at `~/Android/Sdk`.
 - Seed and mock signing keys are test-only and must not be used for real instruments.
