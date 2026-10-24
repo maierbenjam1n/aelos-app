@@ -185,11 +185,11 @@ class _DashboardBody extends StatelessWidget {
     final Color sensorColor;
 
     if (startupError != null) {
-      sensorLabel = 'Demo sensor unavailable';
+      sensorLabel = 'Sensor unavailable';
       sensorIcon = Icons.sensors_off_rounded;
       sensorColor = colors.attention;
     } else if (session?.status == ConnectionStatus.connected) {
-      sensorLabel = 'Mock sensor connected';
+      sensorLabel = 'Sensor connected · live';
       sensorIcon = Icons.bluetooth_connected_rounded;
       sensorColor = colors.calm;
     } else if (session?.status == ConnectionStatus.syncing) {
@@ -197,11 +197,11 @@ class _DashboardBody extends StatelessWidget {
       sensorIcon = Icons.sync_rounded;
       sensorColor = colors.accent;
     } else if (session?.status == ConnectionStatus.disconnected) {
-      sensorLabel = 'Mock sensor disconnected';
+      sensorLabel = 'Sensor out of range';
       sensorIcon = Icons.bluetooth_disabled_rounded;
       sensorColor = colors.attention;
     } else {
-      sensorLabel = 'Connecting to the mock sensor';
+      sensorLabel = 'Connecting to your sensor';
       sensorIcon = Icons.bluetooth_searching_rounded;
       sensorColor = colors.textMuted;
     }
@@ -262,7 +262,7 @@ class _DashboardBody extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 activeInstrument?.instrument.name ??
-                                    'Seeded history is available offline',
+                                    'Signed history is available offline',
                                 style: text.bodySmall,
                               ),
                             ],
