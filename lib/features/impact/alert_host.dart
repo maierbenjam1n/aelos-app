@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,7 +13,7 @@ import 'impact_takeover_screen.dart';
 
 /// Sits above the app's navigator and turns live alerts into a system
 /// notification, plus the full-screen takeover for impacts and falls.
-class AlertHost extends ConsumerWidget {
+class AlertHost extends ConsumerStatefulWidget {
   const AlertHost({
     super.key,
     required this.navigatorKey,
@@ -23,7 +26,18 @@ class AlertHost extends ConsumerWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AlertHost> createState() => _AlertHostState();
+}
+
+class _AlertHostState extends ConsumerState<AlertHost> {
+  @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb) unawaited(ref.read(notificationServiceProvider).init());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref
       ..listen(alertEventsProvider, (_, next) {
         if (next.value case final alert?) _onAlert(ref, alert);
@@ -31,20 +45,31 @@ class AlertHost extends ConsumerWidget {
       ..listen(awaySummaryProvider, (previous, next) {
         final summary = next?.alerts;
         if (previous == null && summary != null) {
-          final name = ref.read(instrumentProvider(summary.instrumentId))?.instrument.name ?? '';
-          ref.read(notificationServiceProvider).showSummary(summary, instrumentName: name);
+          final name =
+              ref
+                  .read(instrumentProvider(summary.instrumentId))
+                  ?.instrument
+                  .name ??
+              '';
+          ref
+              .read(notificationServiceProvider)
+              .showSummary(summary, instrumentName: name);
         }
       });
-    return child;
+    return widget.child;
   }
 
   void _onAlert(WidgetRef ref, Alert alert) {
     final data = ref.read(instrumentProvider(alert.instrumentId));
     if (data == null) return;
-    ref.read(notificationServiceProvider).showAlert(alert, instrumentName: data.instrument.name);
+    ref
+        .read(notificationServiceProvider)
+        .showAlert(alert, instrumentName: data.instrument.name);
 
-    final isEvent = alert.rule == ThresholdRule.impact || alert.rule == ThresholdRule.freeFall;
-    final navigator = navigatorKey.currentState;
+    final isEvent =
+        alert.rule == ThresholdRule.impact ||
+        alert.rule == ThresholdRule.freeFall;
+    final navigator = widget.navigatorKey.currentState;
     if (!isEvent || navigator == null) return;
     navigator.push(
       ImpactTakeoverScreen.route(
@@ -55,7 +80,7 @@ class AlertHost extends ConsumerWidget {
           onDismiss: navigator.pop,
           onViewInstrument: () {
             navigator.pop();
-            onOpenInstrument(alert.instrumentId);
+            widget.onOpenInstrument(alert.instrumentId);
           },
         ),
       ),

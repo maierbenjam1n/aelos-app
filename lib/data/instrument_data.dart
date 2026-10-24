@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import '../domain/models/audit_incident.dart';
 import '../domain/models/condition_status.dart';
 import '../domain/models/instrument.dart';
 import '../domain/models/sensor_record.dart';
@@ -14,6 +17,8 @@ final class InstrumentData {
     required this.thresholdState,
     required this.displayOffset,
     this.tighterLimitsReason,
+    this.photoBytes,
+    this.integrityIncidents = const [],
   });
 
   final Instrument instrument;
@@ -32,6 +37,12 @@ final class InstrumentData {
 
   /// E.g. "Tighter limits applied: instrument over 100 years old".
   final String? tighterLimitsReason;
+
+  /// An optional user-selected photo kept in memory for this session.
+  final Uint8List? photoBytes;
+
+  /// Untrusted sensor records rejected by the incremental verifier.
+  final List<AuditIncident> integrityIncidents;
 
   String get id => instrument.id;
 
@@ -53,14 +64,16 @@ final class InstrumentData {
     List<Alert>? alerts,
     ConditionStatus? status,
     ThresholdState? thresholdState,
-  }) =>
-      InstrumentData(
-        instrument: instrument,
-        records: records ?? this.records,
-        alerts: alerts ?? this.alerts,
-        status: status ?? this.status,
-        thresholdState: thresholdState ?? this.thresholdState,
-        displayOffset: displayOffset,
-        tighterLimitsReason: tighterLimitsReason,
-      );
+    List<AuditIncident>? integrityIncidents,
+  }) => InstrumentData(
+    instrument: instrument,
+    records: records ?? this.records,
+    alerts: alerts ?? this.alerts,
+    status: status ?? this.status,
+    thresholdState: thresholdState ?? this.thresholdState,
+    displayOffset: displayOffset,
+    tighterLimitsReason: tighterLimitsReason,
+    photoBytes: photoBytes,
+    integrityIncidents: integrityIncidents ?? this.integrityIncidents,
+  );
 }

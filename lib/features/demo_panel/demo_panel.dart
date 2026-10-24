@@ -17,21 +17,18 @@ const demoInstrumentId = 'violin-mittenwald';
 /// work on the first tap during a live demo.
 Future<void> showDemoPanel(
   BuildContext context, {
-  required VoidCallback onRestartDemo,
   required VoidCallback onOpenStyleGuide,
-}) =>
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      backgroundColor: AelosColors.of(context).surfaceRaised,
-      builder: (_) => DemoPanel(onRestartDemo: onRestartDemo, onOpenStyleGuide: onOpenStyleGuide),
-    );
+}) => showModalBottomSheet<void>(
+  context: context,
+  showDragHandle: true,
+  isScrollControlled: true,
+  backgroundColor: AelosColors.of(context).surfaceRaised,
+  builder: (_) => DemoPanel(onOpenStyleGuide: onOpenStyleGuide),
+);
 
 class DemoPanel extends ConsumerWidget {
-  const DemoPanel({super.key, required this.onRestartDemo, required this.onOpenStyleGuide});
+  const DemoPanel({super.key, required this.onOpenStyleGuide});
 
-  final VoidCallback onRestartDemo;
   final VoidCallback onOpenStyleGuide;
 
   @override
@@ -41,7 +38,8 @@ class DemoPanel extends ConsumerWidget {
     final session = ref.watch(sessionProvider);
     final mock = ref.watch(sessionProvider.notifier).mock;
     final transport = ref.watch(transportProvider);
-    final connected = session?.status == ConnectionStatus.connected ||
+    final connected =
+        session?.status == ConnectionStatus.connected ||
         session?.status == ConnectionStatus.syncing;
 
     void close() => Navigator.of(context).pop();
@@ -67,39 +65,64 @@ class DemoPanel extends ConsumerWidget {
             const SizedBox(height: Space.l),
             const Eyebrow('Events'),
             const SizedBox(height: Space.s),
-            _Grid(children: [
-              _Action('Impact', Icons.flash_on_rounded, mock == null ? null : () => demo(DemoAction.impact)),
-              _Action('Free fall', Icons.south_rounded, mock == null ? null : () => demo(DemoAction.freefall)),
-              _Action(
-                mock?.isDrying ?? false ? 'Stop drying' : 'Drying trend',
-                Icons.water_drop_outlined,
-                mock == null
-                    ? null
-                    : () => demo(mock.isDrying ? DemoAction.normal : DemoAction.dry),
-              ),
-              _Action(
-                connected ? 'Disconnect' : 'Reconnect',
-                connected ? Icons.bluetooth_disabled_rounded : Icons.bluetooth_connected_rounded,
-                mock == null
-                    ? null
-                    : () {
-                        close();
-                        connected ? mock.simulateDisconnect() : mock.simulateReconnect();
-                      },
-              ),
-            ]),
+            _Grid(
+              children: [
+                _Action(
+                  'Impact',
+                  Icons.flash_on_rounded,
+                  mock == null ? null : () => demo(DemoAction.impact),
+                ),
+                _Action(
+                  'Free fall',
+                  Icons.south_rounded,
+                  mock == null ? null : () => demo(DemoAction.freefall),
+                ),
+                _Action(
+                  mock?.isDrying ?? false ? 'Stop drying' : 'Drying trend',
+                  Icons.water_drop_outlined,
+                  mock == null
+                      ? null
+                      : () => demo(
+                          mock.isDrying ? DemoAction.normal : DemoAction.dry,
+                        ),
+                ),
+                _Action(
+                  connected ? 'Disconnect' : 'Reconnect',
+                  connected
+                      ? Icons.bluetooth_disabled_rounded
+                      : Icons.bluetooth_connected_rounded,
+                  mock == null
+                      ? null
+                      : () {
+                          close();
+                          connected
+                              ? mock.simulateDisconnect()
+                              : mock.simulateReconnect();
+                        },
+                ),
+              ],
+            ),
             const SizedBox(height: Space.xl),
             const Eyebrow('Transport'),
             const SizedBox(height: Space.s),
             SegmentedButton<SensorTransport>(
               segments: const [
                 ButtonSegment(value: SensorTransport.mock, label: Text('Mock')),
-                ButtonSegment(value: SensorTransport.ws, label: Text('Wi-Fi'), enabled: false),
-                ButtonSegment(value: SensorTransport.ble, label: Text('Bluetooth'), enabled: false),
+                ButtonSegment(
+                  value: SensorTransport.ws,
+                  label: Text('Wi-Fi'),
+                  enabled: false,
+                ),
+                ButtonSegment(
+                  value: SensorTransport.ble,
+                  label: Text('Bluetooth'),
+                  enabled: false,
+                ),
               ],
               selected: {transport},
               showSelectedIcon: false,
-              onSelectionChanged: (s) => ref.read(transportProvider.notifier).set(s.single),
+              onSelectionChanged: (s) =>
+                  ref.read(transportProvider.notifier).set(s.single),
             ),
             const SizedBox(height: Space.xl),
             const Hairline(),
@@ -113,14 +136,15 @@ class DemoPanel extends ConsumerWidget {
                 await resetDemoData(ref);
               },
             ),
-            _Row('Restart from onboarding', 'For a full rehearsal', Icons.replay_rounded, () {
-              close();
-              onRestartDemo();
-            }),
-            _Row('Style guide', 'Every token and component', Icons.palette_outlined, () {
-              close();
-              onOpenStyleGuide();
-            }),
+            _Row(
+              'Style guide',
+              'Every token and component',
+              Icons.palette_outlined,
+              () {
+                close();
+                onOpenStyleGuide();
+              },
+            ),
             const SizedBox(height: Space.s),
             Text(
               'Long-press the Aelos mark to open this panel.',
@@ -154,14 +178,14 @@ class _Grid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: Space.s,
-        crossAxisSpacing: Space.s,
-        childAspectRatio: 3.2,
-        children: children,
-      );
+    crossAxisCount: 2,
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    mainAxisSpacing: Space.s,
+    crossAxisSpacing: Space.s,
+    childAspectRatio: 3.2,
+    children: children,
+  );
 }
 
 class _Action extends StatelessWidget {
@@ -173,11 +197,11 @@ class _Action extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 18),
-        label: Text(label),
-        style: OutlinedButton.styleFrom(minimumSize: Size.zero),
-      );
+    onPressed: onTap,
+    icon: Icon(icon, size: 18),
+    label: Text(label),
+    style: OutlinedButton.styleFrom(minimumSize: Size.zero),
+  );
 }
 
 class _Row extends StatelessWidget {
@@ -190,10 +214,10 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon),
-        title: Text(title, style: Theme.of(context).textTheme.titleSmall),
-        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-        onTap: onTap,
-      );
+    contentPadding: EdgeInsets.zero,
+    leading: Icon(icon),
+    title: Text(title, style: Theme.of(context).textTheme.titleSmall),
+    subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+    onTap: onTap,
+  );
 }
