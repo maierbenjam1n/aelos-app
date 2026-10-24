@@ -60,26 +60,7 @@ void _addReports(ProviderContainer c) {
   );
   reports.updateStatus('shot-cello-impact', ReportStatus.resolved,
       note: 'Checked on the bench: soundpost and seams fine.');
-  reports.submit(
-    EventReport(
-      id: 'shot-violin-knock',
-      instrumentId: 'violin-markneukirchen',
-      eventSeq: 1624,
-      eventTitle: 'Impact recorded · 3.6 g',
-      eventTime: DateTime.utc(2026, 10, 21, 14, 12, 44),
-      explanation: 'My school bag fell against the case on the bus. The bridge looks a little '
-          'tilted towards the fingerboard now.',
-      causes: const ['Knocked while carrying'],
-      photos: [
-        for (final a in [PhotoAngle.front, PhotoAngle.back, PhotoAngle.trebleSide, PhotoAngle.detail])
-          ReportPhoto(angle: a, takenAt: DateTime.utc(2026, 10, 21, 15, 2), assetPath: 'assets/photos/violin.jpg'),
-      ],
-      authorId: 'sofia-bianchi',
-      authorName: 'Sofia Bianchi',
-      createdAt: DateTime.utc(2026, 10, 21, 15, 6),
-      luthierId: DemoDirectory.brunner.id,
-    ),
-  );
+  // Sofia's report on the ¾ violin is part of the seeded inbox.
 }
 
 typedef _Act = Future<void> Function(WidgetTester tester);
@@ -127,8 +108,8 @@ void main() {
       await t.tap(find.byTooltip('Account'));
       await _settle(t, 900);
     }, _phone),
-    ('review', const ReportReviewScreen(reportId: 'shot-violin-knock'), null, _phone),
-    ('review_photos', const ReportReviewScreen(reportId: 'shot-violin-knock'), (t) => _drag(t, 900), _phone),
+    ('review', const ReportReviewScreen(reportId: 'report-violin-knock'), null, _phone),
+    ('review_photos', const ReportReviewScreen(reportId: 'report-violin-knock'), (t) => _drag(t, 900), _phone),
     ('review_inspection', const ReportReviewScreen(reportId: 'report-viola-fall'),
         (t) => _tap(t, 'Schedule inspection'), _phone),
     ('review_resolved', const ReportReviewScreen(reportId: 'shot-cello-impact'), (t) => _drag(t, 2000), _phone),

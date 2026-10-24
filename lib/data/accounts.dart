@@ -160,11 +160,33 @@ final liveInstrumentIdProvider = Provider<String?>((ref) {
 final eventReportsProvider =
     NotifierProvider<EventReportsNotifier, List<EventReport>>(EventReportsNotifier.new);
 
-/// Documented events, newest first. Starts with one report from another
-/// renter so the luthier's inbox isn't empty.
+/// Documented events, newest first. Starts with two reports from other
+/// renters so the luthier's inbox isn't empty.
 class EventReportsNotifier extends Notifier<List<EventReport>> {
   @override
   List<EventReport> build() => [
+        EventReport(
+          id: 'report-violin-knock',
+          instrumentId: 'violin-markneukirchen',
+          eventSeq: 1624,
+          eventTitle: 'Impact recorded · 3.6 g',
+          eventTime: DateTime.utc(2026, 10, 21, 14, 12, 44),
+          explanation: 'My school bag fell against the case on the bus. The bridge looks a '
+              'little tilted towards the fingerboard now.',
+          causes: const ['Knocked while carrying'],
+          photos: [
+            for (final angle in [PhotoAngle.front, PhotoAngle.back, PhotoAngle.trebleSide, PhotoAngle.detail])
+              ReportPhoto(
+                angle: angle,
+                takenAt: DateTime.utc(2026, 10, 21, 15, 2),
+                assetPath: 'assets/photos/violin.jpg',
+              ),
+          ],
+          authorId: 'sofia-bianchi',
+          authorName: 'Sofia Bianchi',
+          createdAt: DateTime.utc(2026, 10, 21, 15, 6),
+          luthierId: DemoDirectory.brunner.id,
+        ),
         EventReport(
           id: 'report-viola-fall',
           instrumentId: 'viola-cremona',
