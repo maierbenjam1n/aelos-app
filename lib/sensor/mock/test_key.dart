@@ -18,3 +18,11 @@ Uint8List registrationTestKeySeed(int index) => Uint8List.fromList(
       .hashSync(utf8.encode('aelos registration sensor $index - TEST ONLY'))
       .bytes,
 );
+
+/// Test-only signing seed of a seeded instrument's sensor, as `device_seed`
+/// in tools/gen_seed.py derives it. The Mittenwald violin uses [testKeySeed].
+Uint8List seededDeviceKeySeed(String instrumentId) => Uint8List.fromList(
+  const DartSha256()
+      .hashSync(utf8.encode('aelos seed device $instrumentId - TEST ONLY'))
+      .bytes,
+);

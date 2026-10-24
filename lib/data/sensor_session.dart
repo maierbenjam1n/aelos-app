@@ -16,6 +16,7 @@ import '../sensor/mock/mock_chain_state.dart';
 import '../sensor/mock/mock_sensor_connection.dart';
 import '../sensor/mock/test_key.dart';
 import '../sensor/sensor_connection.dart';
+import 'accounts.dart';
 import 'instruments_notifier.dart';
 
 final transportProvider = NotifierProvider<TransportNotifier, SensorTransport>(
@@ -29,19 +30,22 @@ class TransportNotifier extends Notifier<SensorTransport> {
   void set(SensorTransport transport) => state = transport;
 }
 
-/// The active transport. The mock continues the seeded violin's chain, on the
-/// seed's timeline, so its records extend the history seamlessly.
+/// The active transport. The mock plays the live instrument's sensor
+/// (`liveInstrumentIdProvider`) and continues that instrument's seeded chain
+/// on the seed's timeline, so its records extend the history seamlessly.
 final sensorConnectionProvider = FutureProvider<SensorConnection>((ref) async {
   final transport = ref.watch(transportProvider);
+  final liveId = ref.watch(liveInstrumentIdProvider) ?? 'violin-mittenwald';
   final seed = await ref.watch(seedProvider.future);
   final offset = ref.watch(appStartProvider).difference(seed.endTime);
   switch (transport) {
     case SensorTransport.mock:
-      final violin = seed.instruments.firstWhere(
-        (s) => s.instrument.sensorId == testDeviceId,
-      );
+      final live = seed.instruments.firstWhere((s) => s.instrument.id == liveId);
       final mock = MockSensorConnection(
-        chainState: MockChainState.fromRecords(violin.records),
+        privateSeed: live.instrument.sensorId == testDeviceId
+            ? testKeySeed
+            : seededDeviceKeySeed(live.instrument.id),
+        chainState: MockChainState.fromRecords(live.records),
         readingInterval: MockSensorConnection.demoReadingInterval,
         now: () => DateTime.now().toUtc().subtract(offset),
       );

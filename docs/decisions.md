@@ -2,6 +2,9 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: Three demo roles (owner, renter, luthier), luthier side in the phone app first
+Sign-in picks one of three fixed demo accounts (`data/accounts.dart`, no backend): an owner manages their own instruments; a renter rents from a luthier (Atelier Brunner), who provides the sensor and is the renter's contact; a luthier manages the fleet. Luthier mode lives in the phone app now so one phone can tell the whole story (renter reports an impact → luthier sees it); the web portal (phase two) gets a wider luthier view later. The mock sensor plays the role's live instrument (owner: violin, renter and luthier: the rented cello), continuing that instrument's seeded chain with its own test key. Event reports (explanation + guided photos per angle) are owner/renter-supplied and not signed; they reference the signed record by sequence number.
+
 ### 2026-10-24: Keep rejected live records in a separate audit incident list
 An incrementally rejected sensor record must remain visible for review without being mistaken for part of the verified condition history. The audit log records its sequence, rejection reason, receive time and raw JSON separately, and deduplicates repeats during reconnect replay. Rejected: inserting invalid input into the hash chain or dropping it after a console message.
 
