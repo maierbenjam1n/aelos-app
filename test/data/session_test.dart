@@ -29,7 +29,7 @@ void main() {
 
     final seeded = await container.read(instrumentsProvider.future);
     final before = seeded.firstWhere((i) => i.id == _violin).records.length;
-    expect(seeded, hasLength(3));
+    expect(seeded, hasLength(6));
 
     final alerts = <Alert>[];
     container.listen(alertEventsProvider, (_, next) {

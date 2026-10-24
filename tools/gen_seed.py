@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Write the seeded demo data to assets/seed/.
 
-Three instruments with 30 days of signed, hash-chained history each, ending at
-END_TS. Deterministic: fixed keys, fixed times and a seeded random.Random per
+Six instruments with signed, hash-chained history ending at END_TS: the
+original three with 30 days each, and three more Atelier Brunner rentals with
+14 days each. Deterministic: fixed keys, fixed times and a seeded random.Random per
 instrument, so re-running produces byte-identical files.
 
 Usage: python3 tools/gen_seed.py   (needs pynacl)
@@ -28,7 +29,6 @@ OUT = Path(__file__).resolve().parent.parent / "assets" / "seed"
 # 2026-10-24T08:00:00Z. The app shifts display times so this lines up with now.
 END_TS = 1792828800
 DAYS = 30
-START_TS = END_TS - DAYS * 86400
 INTERVAL = 600
 # A reading follows each boot after this many seconds.
 FIRST_READING_DELAY = 5
@@ -86,6 +86,11 @@ class Profile:
     # Sensor off from gap[0] until the boot at gap[1].
     gap: tuple[int, int] | None = None
     drying: Drying | None = None
+    days: int = DAYS
+
+    @property
+    def start(self) -> int:
+        return END_TS - self.days * DAY
 
 
 def at(day_before_end: int, hh: int, mm: int = 0, ss: int = 0) -> int:
@@ -165,6 +170,77 @@ INSTRUMENTS = [
             ],
         ),
     },
+    # Atelier Brunner's other rentals: 14 days each.
+    {
+        "id": "violin-markneukirchen",
+        "name": "¾ Violin, Markneukirchen",
+        "type": "violin",
+        "maker": "Markneukirchen workshop",
+        "origin": "Markneukirchen, Saxony",
+        "yearMade": 1925,
+        "era": "c. 1925",
+        "topWood": "Spruce",
+        "backWood": "Maple",
+        "varnish": "Spirit varnish",
+        "crackRepairs": False,
+        "crackRepairNote": None,
+        "photo": "assets/photos/violin.jpg",
+        "_seed": device_seed("violin-markneukirchen"),
+        "_profile": Profile(
+            rng_seed=1925, t_mean=21.1, t_swing=2.3, h_mean=47.6, h_lo=44.6, h_hi=51.0,
+            days=14,
+            # A knock in a school bag on the way home: warning, not critical.
+            events=[(at(3, 16, 12, 44), {"k": "i", "g": 36})],
+        ),
+    },
+    {
+        "id": "cello-brunner",
+        "name": "Cello, Atelier Brunner 2019",
+        "type": "cello",
+        "maker": "Atelier Brunner",
+        "origin": "Luzern, Switzerland",
+        "yearMade": 2019,
+        "era": None,
+        "topWood": "Spruce",
+        "backWood": "Flamed maple",
+        "varnish": "Oil varnish",
+        "crackRepairs": False,
+        "crackRepairNote": None,
+        "photo": "assets/photos/cello.jpg",
+        "_seed": device_seed("cello-brunner"),
+        "_profile": Profile(
+            rng_seed=2019, t_mean=20.8, t_swing=2.0, h_mean=47.9, h_lo=45.0, h_hi=51.2,
+            days=14,
+            # Heating switched on in the renter's flat the evening before the
+            # end: humidity drifts below the 40 % band and stays there, so the
+            # cello ends on "Needs attention" (never below 35 %, which is act now).
+            drying=Drying(start=at(1, 18, 30), fall=12 * HOUR, hold=10 * DAY,
+                          recover=HOUR, low=38.1, warm=1.1),
+        ),
+    },
+    {
+        "id": "violin-mirecourt",
+        "name": "Violin, Mirecourt",
+        "type": "violin",
+        "maker": "Mirecourt workshop",
+        "origin": "Mirecourt, Vosges",
+        "yearMade": 1900,
+        "era": "c. 1900",
+        "topWood": "Spruce",
+        "backWood": "One-piece maple",
+        "varnish": "Spirit varnish",
+        "crackRepairs": False,
+        "crackRepairNote": None,
+        "photo": "assets/photos/violin.jpg",
+        "_seed": device_seed("violin-mirecourt"),
+        "_profile": Profile(
+            # In the workshop: a steady, controlled room.
+            rng_seed=1900, t_mean=20.4, t_swing=0.9, h_mean=47.2, h_lo=45.6, h_hi=49.0,
+            days=14,
+            # Sensor out of the case for 3 h while the violin was on the bench.
+            gap=(at(5, 9, 40), at(5, 12, 52, 10)),
+        ),
+    },
 ]
 
 
@@ -177,13 +253,13 @@ def soft_clamp(x: float, lo: float, hi: float) -> float:
 def climate(p: Profile, rng: random.Random):
     """Return f(ts) -> (tenths °C, tenths % RH), stateful in time order."""
     # Slow weather: a smoothed per-day temperature offset, interpolated.
-    day_offsets = [rng.gauss(0, 0.5) for _ in range(DAYS + 3)]
+    day_offsets = [rng.gauss(0, 0.5) for _ in range(p.days + 3)]
     h_phase = [rng.uniform(0, 2 * math.pi) for _ in range(3)]
     state = {"t_ar": 0.0, "h_ar": 0.0}
 
     def f(ts: int) -> tuple[int, int]:
-        days = (ts - START_TS) / DAY
-        i = max(0, min(int(days), DAYS + 1))
+        days = (ts - p.start) / DAY
+        i = max(0, min(int(days), p.days + 1))
         frac = days - int(days)
         w = (1 - math.cos(math.pi * frac)) / 2
         weather = day_offsets[i] * (1 - w) + day_offsets[i + 1] * w
@@ -221,7 +297,7 @@ def bodies(p: Profile) -> list[dict]:
     reading = climate(p, rng)
     timeline: list[tuple[int, int, dict]] = []  # (ts, order, body)
 
-    boots = [START_TS] + ([p.gap[1]] if p.gap else [])
+    boots = [p.start] +([p.gap[1]] if p.gap else [])
     for n, boot in enumerate(boots):
         stop = p.gap[0] if p.gap and n == 0 else END_TS
         timeline.append((boot, 0, {"k": "b"}))

@@ -59,6 +59,27 @@ abstract final class DemoDirectory {
       since: DateTime.utc(2026, 8, 15),
       plan: 'Monthly rental',
     ),
+    Rental(
+      instrumentId: 'violin-markneukirchen',
+      luthierId: brunner.id,
+      renterId: 'sofia-bianchi',
+      renterName: 'Sofia Bianchi',
+      since: DateTime.utc(2026, 9, 7),
+      plan: 'Student rental · size exchange',
+    ),
+    Rental(
+      instrumentId: 'cello-brunner',
+      luthierId: brunner.id,
+      renterId: 'jonas-frei',
+      renterName: 'Jonas Frei',
+      since: DateTime.utc(2026, 6, 20),
+      plan: 'Rent to own · 36 months',
+    ),
+    Rental(
+      instrumentId: 'violin-mirecourt',
+      luthierId: brunner.id,
+      plan: 'Monthly rental · purchase option',
+    ),
   ];
 }
 
@@ -139,11 +160,33 @@ final liveInstrumentIdProvider = Provider<String?>((ref) {
 final eventReportsProvider =
     NotifierProvider<EventReportsNotifier, List<EventReport>>(EventReportsNotifier.new);
 
-/// Documented events, newest first. Starts with one report from another
-/// renter so the luthier's inbox isn't empty.
+/// Documented events, newest first. Starts with two reports from other
+/// renters so the luthier's inbox isn't empty.
 class EventReportsNotifier extends Notifier<List<EventReport>> {
   @override
   List<EventReport> build() => [
+        EventReport(
+          id: 'report-violin-knock',
+          instrumentId: 'violin-markneukirchen',
+          eventSeq: 1624,
+          eventTitle: 'Impact recorded · 3.6 g',
+          eventTime: DateTime.utc(2026, 10, 21, 14, 12, 44),
+          explanation: 'My school bag fell against the case on the bus. The bridge looks a '
+              'little tilted towards the fingerboard now.',
+          causes: const ['Knocked while carrying'],
+          photos: [
+            for (final angle in [PhotoAngle.front, PhotoAngle.back, PhotoAngle.trebleSide, PhotoAngle.detail])
+              ReportPhoto(
+                angle: angle,
+                takenAt: DateTime.utc(2026, 10, 21, 15, 2),
+                assetPath: 'assets/photos/violin.jpg',
+              ),
+          ],
+          authorId: 'sofia-bianchi',
+          authorName: 'Sofia Bianchi',
+          createdAt: DateTime.utc(2026, 10, 21, 15, 6),
+          luthierId: DemoDirectory.brunner.id,
+        ),
         EventReport(
           id: 'report-viola-fall',
           instrumentId: 'viola-cremona',
