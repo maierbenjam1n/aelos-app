@@ -2,6 +2,9 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: `image_picker` for event-report photos
+Documenting an impact asks for one photo per angle, taken there and then or chosen from the library. `image_picker` is the Flutter team's plugin for both, uses the system camera and picker (no camera UI to build, and on Android no camera permission to request), and downscales on pick (`maxWidth: 1600`, quality 85) so a six-photo report stays a few MB in memory. Photos are kept as bytes in `EventReport`, not written to disk, like registration photos. Rejected: `camera` (a live preview with our own framing overlay would look great but costs a custom capture screen, lifecycle handling and permissions for little demo gain); reusing `file_picker` (no camera).
+
 ### 2026-10-24: Three demo roles (owner, renter, luthier), luthier side in the phone app first
 Sign-in picks one of three fixed demo accounts (`data/accounts.dart`, no backend): an owner manages their own instruments; a renter rents from a luthier (Atelier Brunner), who provides the sensor and is the renter's contact; a luthier manages the fleet. Luthier mode lives in the phone app now so one phone can tell the whole story (renter reports an impact → luthier sees it); the web portal (phase two) gets a wider luthier view later. The mock sensor plays the role's live instrument (owner: violin, renter and luthier: the rented cello), continuing that instrument's seeded chain with its own test key. Event reports (explanation + guided photos per angle) are owner/renter-supplied and not signed; they reference the signed record by sequence number.
 

@@ -21,6 +21,7 @@ class ImpactTakeoverScreen extends StatefulWidget {
     required this.displayTime,
     required this.onViewInstrument,
     required this.onDismiss,
+    this.onDocument,
   });
 
   final Alert alert;
@@ -30,6 +31,9 @@ class ImpactTakeoverScreen extends StatefulWidget {
   final DateTime displayTime;
   final VoidCallback onViewInstrument;
   final VoidCallback onDismiss;
+
+  /// Opens the guided documentation (explanation and photos) for this event.
+  final VoidCallback? onDocument;
 
   /// Fades in over the current screen, settling from a slight zoom.
   static Route<void> route(ImpactTakeoverScreen screen) => PageRouteBuilder<void>(
@@ -92,53 +96,87 @@ class _ImpactTakeoverScreenState extends State<ImpactTakeoverScreen>
             ),
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Space.page),
-              child: Column(
-                children: [
-                  const Spacer(flex: 5),
-                  Eyebrow(isFall ? 'Drop recorded' : 'Impact recorded', color: colors.statusInk(alert.severity)),
-                  const SizedBox(height: Space.l),
-                  ReadingValue(
-                    value: isFall ? alert.measured.toDouble() : alert.measured / 10,
-                    unit: isFall ? 'ms' : 'g',
-                    decimals: isFall ? 0 : 1,
-                    size: ReadingSize.hero,
-                    countFrom: 0,
+            child: LayoutBuilder(
+              // Scrolls only if a small phone can't fit everything.
+              builder: (context, constraints) => SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: Space.page),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        const Spacer(flex: 5),
+                        Eyebrow(
+                          isFall ? 'Drop recorded' : 'Impact recorded',
+                          color: colors.statusInk(alert.severity),
+                        ),
+                        const SizedBox(height: Space.l),
+                        ReadingValue(
+                          value: isFall ? alert.measured.toDouble() : alert.measured / 10,
+                          unit: isFall ? 'ms' : 'g',
+                          decimals: isFall ? 0 : 1,
+                          size: ReadingSize.hero,
+                          countFrom: 0,
+                        ),
+                        const SizedBox(height: Space.l),
+                        StatusBadge(alert.severity, large: true).riseIn(2),
+                        const SizedBox(height: Space.xl),
+                        Text(
+                          alert.title,
+                          style: text.headlineLarge,
+                          textAlign: TextAlign.center,
+                        ).riseIn(3),
+                        const SizedBox(height: Space.s),
+                        Text(
+                          '${widget.instrumentName} · $time',
+                          style: text.bodyMedium!.copyWith(color: colors.textMuted),
+                          textAlign: TextAlign.center,
+                        ).riseIn(4),
+                        const SizedBox(height: Space.xl),
+                        const Hairline(ornament: true, indent: Space.xxl).riseIn(5),
+                        const SizedBox(height: Space.xl),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 340),
+                          child: Text(
+                            alert.whatToDo,
+                            style: AelosText.of(context).note.copyWith(color: colors.text),
+                            textAlign: TextAlign.center,
+                          ),
+                        ).riseIn(6),
+                        const Spacer(flex: 4),
+                        const SizedBox(height: Space.xl),
+                        if (widget.onDocument case final onDocument?) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: onDocument,
+                              icon: const Icon(Icons.photo_camera_outlined, size: 20),
+                              label: const Text('Document this event'),
+                            ),
+                          ).riseIn(7),
+                          const SizedBox(height: Space.s),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: widget.onViewInstrument,
+                              child: const Text('View instrument'),
+                            ),
+                          ).riseIn(8),
+                        ] else
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: widget.onViewInstrument,
+                              child: const Text('View instrument'),
+                            ),
+                          ).riseIn(7),
+                        const SizedBox(height: Space.xs),
+                        TextButton(onPressed: widget.onDismiss, child: const Text('Dismiss')),
+                        const SizedBox(height: Space.s),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: Space.l),
-                  StatusBadge(alert.severity, large: true).riseIn(2),
-                  const SizedBox(height: Space.xl),
-                  Text(alert.title, style: text.headlineLarge, textAlign: TextAlign.center).riseIn(3),
-                  const SizedBox(height: Space.s),
-                  Text(
-                    '${widget.instrumentName} · $time',
-                    style: text.bodyMedium!.copyWith(color: colors.textMuted),
-                    textAlign: TextAlign.center,
-                  ).riseIn(4),
-                  const SizedBox(height: Space.xl),
-                  const Hairline(ornament: true, indent: Space.xxl).riseIn(5),
-                  const SizedBox(height: Space.xl),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 340),
-                    child: Text(
-                      alert.whatToDo,
-                      style: AelosText.of(context).note.copyWith(color: colors.text),
-                      textAlign: TextAlign.center,
-                    ),
-                  ).riseIn(6),
-                  const Spacer(flex: 4),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: widget.onViewInstrument,
-                      child: const Text('View instrument'),
-                    ),
-                  ).riseIn(7),
-                  const SizedBox(height: Space.s),
-                  TextButton(onPressed: widget.onDismiss, child: const Text('Dismiss')),
-                  const SizedBox(height: Space.s),
-                ],
+                ),
               ),
             ),
           ),

@@ -11,16 +11,21 @@ import '../../core/widgets/eyebrow.dart';
 import '../../core/widgets/hairline.dart';
 import '../../core/widgets/reading_value.dart';
 import '../../core/widgets/status_badge.dart';
+import '../../data/accounts.dart';
 import '../../data/instrument_data.dart';
 import '../../data/instruments_notifier.dart';
 import '../../data/sensor_session.dart';
 import '../../domain/history/downsample.dart';
 import '../../domain/history/gaps.dart';
+import '../../domain/models/event_report.dart';
 import '../../domain/models/live_reading.dart';
 import '../../domain/models/sensor_record.dart';
 import '../../domain/thresholds/alert.dart';
 import '../../sensor/sensor_connection.dart';
 import '../audit/audit_log_screen.dart';
+import '../event_report/event_report_flow.dart';
+import '../event_report/report_copy.dart';
+import '../event_report/report_detail_screen.dart';
 import '../passport/passport_export_screen.dart';
 
 class InstrumentDetailScreen extends ConsumerStatefulWidget {
@@ -609,14 +614,18 @@ class _HumidityChartPainter extends CustomPainter {
       oldDelegate.colors != colors;
 }
 
-class _EventTimeline extends StatelessWidget {
+class _EventTimeline extends ConsumerWidget {
   const _EventTimeline({required this.data});
 
   final InstrumentData data;
 
   @override
-  Widget build(BuildContext context) {
-    final entries = _entries(data);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reports = [
+      for (final r in ref.watch(eventReportsProvider))
+        if (r.instrumentId == data.id) r,
+    ];
+    final entries = _entries(data, reports);
     final text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -635,13 +644,26 @@ class _EventTimeline extends StatelessWidget {
         else
           for (var i = 0; i < entries.length; i++) ...[
             if (i > 0) const SizedBox(height: Space.s),
-            _TimelineCard(entry: entries[i], data: data),
+            if (entries[i].report case final report?)
+              ReportHistoryCard(
+                report: report,
+                when: _dateTime(data.displayTime(report.createdAt)),
+                onTap: () => Navigator.of(context).push(ReportDetailScreen.route(report.id)),
+              )
+            else
+              _TimelineCard(
+                entry: entries[i],
+                data: data,
+                documented: entries[i].seq == null
+                    ? null
+                    : reports.where((r) => r.eventSeq == entries[i].seq).firstOrNull,
+              ),
           ],
       ],
     );
   }
 
-  List<_TimelineEntry> _entries(InstrumentData data) {
+  List<_TimelineEntry> _entries(InstrumentData data, List<EventReport> reports) {
     final alertBySequence = <int, Alert>{};
     for (final alert in data.alerts) {
       for (final seq in alert.seqs) {
@@ -673,6 +695,34 @@ class _EventTimeline extends StatelessWidget {
           },
           detail: alert?.why ?? 'Signed event recorded by the sensor.',
           alert: alert,
+          seq: record.seq,
+          documentAs: switch (record.kind) {
+            RecordKind.impact => eventTitleFor(
+              fall: false,
+              measured: record.tenthsG ?? 0,
+              headline: alert?.title,
+            ),
+            RecordKind.freeFall => eventTitleFor(
+              fall: true,
+              measured: record.freeFallMs ?? 0,
+              headline: alert?.title,
+            ),
+            _ => null,
+          },
+        ),
+      );
+    }
+    // Documented reports sit in the history at the time they were written
+    // (createdAt is on the signed timeline, like the events).
+    for (final report in reports) {
+      entries.add(
+        _TimelineEntry(
+          time: report.createdAt,
+          icon: Icons.photo_library_outlined,
+          title: report.eventTitle,
+          detail: report.explanation,
+          alert: null,
+          report: report,
         ),
       );
     }
@@ -702,6 +752,9 @@ class _TimelineEntry {
     required this.title,
     required this.detail,
     required this.alert,
+    this.seq,
+    this.documentAs,
+    this.report,
   });
 
   final DateTime time;
@@ -709,13 +762,23 @@ class _TimelineEntry {
   final String title;
   final String detail;
   final Alert? alert;
+  final int? seq;
+
+  /// Event title for the report flow; set for impacts and falls.
+  final String? documentAs;
+
+  /// Set when this entry is a documented report.
+  final EventReport? report;
 }
 
 class _TimelineCard extends StatelessWidget {
-  const _TimelineCard({required this.entry, required this.data});
+  const _TimelineCard({required this.entry, required this.data, this.documented});
 
   final _TimelineEntry entry;
   final InstrumentData data;
+
+  /// The report documenting this event, if one exists.
+  final EventReport? documented;
 
   @override
   Widget build(BuildContext context) {
@@ -756,9 +819,36 @@ class _TimelineCard extends StatelessWidget {
                 const SizedBox(height: Space.xs),
                 Text(entry.detail, style: text.bodySmall),
                 const SizedBox(height: Space.s),
-                Text(
-                  _dateTime(data.displayTime(entry.time)),
-                  style: text.labelMedium,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _dateTime(data.displayTime(entry.time)),
+                        style: text.labelMedium,
+                      ),
+                    ),
+                    if (documented case final report?)
+                      _HistoryAction(
+                        icon: Icons.check_rounded,
+                        label: 'Documented',
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).push(ReportDetailScreen.route(report.id)),
+                      )
+                    else if (entry.documentAs case final title?)
+                      _HistoryAction(
+                        icon: Icons.photo_camera_outlined,
+                        label: 'Document',
+                        onPressed: () => Navigator.of(context).push(
+                          EventReportFlow.route(
+                            instrumentId: data.id,
+                            eventTitle: title,
+                            eventTime: entry.time,
+                            eventSeq: entry.seq,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -767,6 +857,30 @@ class _TimelineCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HistoryAction extends StatelessWidget {
+  const _HistoryAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => TextButton.icon(
+    onPressed: onPressed,
+    style: TextButton.styleFrom(
+      visualDensity: VisualDensity.compact,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: Space.s),
+    ),
+    icon: Icon(icon, size: 16),
+    label: Text(label),
+  );
 }
 
 String _dateTime(DateTime time) {
