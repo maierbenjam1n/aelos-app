@@ -11,3 +11,10 @@ final Uint8List testKeySeed = Uint8List.fromList(
 
 /// Device ID of [testKeySeed]'s public key (`device_id` in test/vectors/test_key.json).
 const testDeviceId = '1AFB';
+
+/// Deterministic test-only signing seed for a newly paired mock sensor.
+Uint8List registrationTestKeySeed(int index) => Uint8List.fromList(
+  const DartSha256()
+      .hashSync(utf8.encode('aelos registration sensor $index - TEST ONLY'))
+      .bytes,
+);

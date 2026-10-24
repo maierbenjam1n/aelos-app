@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/models/condition_status.dart';
+import '../domain/models/instrument.dart';
 import '../domain/models/sensor_record.dart';
 import '../domain/thresholds/alert.dart';
 import '../domain/thresholds/condition.dart';
@@ -23,8 +24,8 @@ final appStartProvider = Provider<DateTime>((ref) => DateTime.now().toUtc());
 
 final instrumentsProvider =
     AsyncNotifierProvider<InstrumentsNotifier, List<InstrumentData>>(
-  InstrumentsNotifier.new,
-);
+      InstrumentsNotifier.new,
+    );
 
 /// One instrument by id, or null while loading.
 final instrumentProvider = Provider.family<InstrumentData?, String>(
@@ -48,7 +49,12 @@ class InstrumentsNotifier extends AsyncNotifier<List<InstrumentData>> {
     final instruments = <InstrumentData>[];
     for (final s in seed.instruments) {
       final i = s.instrument;
-      final engine = _engine(i.id, i.yearMade, i.crackRepairs, seed.endTime.year);
+      final engine = _engine(
+        i.id,
+        i.yearMade,
+        i.crackRepairs,
+        seed.endTime.year,
+      );
       final empty = InstrumentData(
         instrument: i,
         records: const [],
@@ -59,19 +65,31 @@ class InstrumentsNotifier extends AsyncNotifier<List<InstrumentData>> {
         tighterLimitsReason: engine.tighterLimitsReason,
       );
       instruments.add(
-        _evaluate(engine, base: empty, newRecords: s.records, seedTimeNow: seed.endTime).$1,
+        _evaluate(
+          engine,
+          base: empty,
+          newRecords: s.records,
+          seedTimeNow: seed.endTime,
+        ).$1,
       );
     }
     return instruments;
   }
 
-  ThresholdEngine _engine(String id, int? yearMade, bool crackRepairs, int year) =>
-      ThresholdEngine(
-        config: _config,
-        instrumentId: id,
-        profile: ThresholdProfile(yearMade: yearMade, hasCrackRepairs: crackRepairs),
-        year: year,
-      );
+  ThresholdEngine _engine(
+    String id,
+    int? yearMade,
+    bool crackRepairs,
+    int year,
+  ) => ThresholdEngine(
+    config: _config,
+    instrumentId: id,
+    profile: ThresholdProfile(
+      yearMade: yearMade,
+      hasCrackRepairs: crackRepairs,
+    ),
+    year: year,
+  );
 
   (InstrumentData, List<Alert>) _evaluate(
     ThresholdEngine engine, {
@@ -82,7 +100,11 @@ class InstrumentsNotifier extends AsyncNotifier<List<InstrumentData>> {
     final result = engine.evaluate(newRecords, base.thresholdState);
     final records = [...base.records, ...newRecords];
     final alerts = [...base.alerts, ...result.alerts];
-    final updated = base.copyWith(records: records, alerts: alerts, thresholdState: result.state);
+    final updated = base.copyWith(
+      records: records,
+      alerts: alerts,
+      thresholdState: result.state,
+    );
     final latest = updated.latestReading;
     return (
       updated.copyWith(
@@ -115,5 +137,42 @@ class InstrumentsNotifier extends AsyncNotifier<List<InstrumentData>> {
     );
     state = AsyncData([...current]..[index] = updated);
     return alerts;
+  }
+
+  /// Adds a newly paired instrument to this session's in-memory collection.
+  InstrumentData register(Instrument instrument, {Uint8List? photoBytes}) {
+    final current = state.value;
+    if (current == null) throw StateError('The collection is still loading');
+    if (current.any((item) => item.id == instrument.id)) {
+      throw StateError('An instrument with this name is already registered');
+    }
+    final linked = current.where(
+      (item) => item.instrument.sensorId == instrument.sensorId,
+    );
+    if (linked.isNotEmpty) {
+      throw StateError(
+        'This sensor is already linked to ${linked.first.instrument.name}',
+      );
+    }
+
+    final now = DateTime.now().toUtc();
+    final engine = _engine(
+      instrument.id,
+      instrument.yearMade,
+      instrument.crackRepairs,
+      now.year,
+    );
+    final data = InstrumentData(
+      instrument: instrument,
+      records: const [],
+      alerts: const [],
+      status: ConditionStatus.calm,
+      thresholdState: ThresholdState.initial(),
+      displayOffset: Duration.zero,
+      tighterLimitsReason: engine.tighterLimitsReason,
+      photoBytes: photoBytes,
+    );
+    state = AsyncData([...current, data]);
+    return data;
   }
 }

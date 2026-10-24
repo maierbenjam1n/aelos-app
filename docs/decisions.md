@@ -2,6 +2,9 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: Registration gets a separate test-only mock sensor identity
+The seeded violin's mock connection already continues its signed history, so pairing another instrument to it would incorrectly give two instruments one key and chain. The registration flow creates a deterministic test-only mock key per new registration and hands that connection to the active session. Registration profile and photo bytes stay in memory, consistent with the demo's no-persistence scope. Rejected: reusing the seeded sensor (misrepresents ownership) and adding a database (outside the hackathon brief).
+
 ### 2026-10-24: Seed data signed offline, displayed with a time offset
 `tools/gen_seed.py` signs 30 days of history per instrument (ending 2026-10-24T08:00Z) with fixed TEST keys, so every rehearsal is identical and startup does no signing. The violin's sensor uses the protocol TEST key so the mock can continue its chain (`test/sensor/mock_continues_seed_test.dart`). Signed timestamps can't change, so the UI shifts display times by `appStart - seed.endTime`, and the mock signs in that same shifted timeline. Seed chains are trusted at startup, not re-verified (about 8 s on 4 isolates). Photos are CC0 Met Museum images (`assets/photos/CREDITS.md`).
 

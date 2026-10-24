@@ -1,49 +1,30 @@
 # Handoff
 
-_Last updated 2026-10-24: step 2 in progress._
+_Last updated 2026-10-24: onboarding, mock pairing and instrument registration connected to the dashboard._
 
 ## State
 
-- **Protocol spec v1.0** (`docs/ble-protocol.md`) published with test vectors (`test/vectors/`) and a Python reference implementation (`tools/aelos_chain.py`). Ready to hand to the Pi developer.
-- **Skeleton:** `pubspec.yaml`, lints, `.fvmrc`, `AppConfig`, domain models, `SensorConnection` interface, placeholder `main.dart`, platform folders (`android/`, `ios/`, `web/`; org `ch.aelos`). `flutter analyze` is clean, `flutter test` passes, and `flutter build web` works.
-- **Verification:** `domain/verification/` (canonical JSON, incremental and parallel chain verification) passes every test vector.
-- **Design system:** `lib/core/` (tokens, colours with enforced contrast, type, motion, shared widgets, f-hole motif). The style guide screen is the temporary home screen.
-- **Seed data:** three instruments with 30 days of signed history (`assets/seed/`, `tools/gen_seed.py`), CC0 photos, `domain/models/instrument.dart`, `data/seed/seed_loader.dart`.
-- **Mock sensor:** `sensor/mock/` follows the spec, continues the seeded violin chain, and has demo controls (impact, free fall, drying, disconnect/reconnect).
-- **Pairing screen:** `features/pairing/` (scan → link → key fingerprint). Not wired into navigation yet.
-- **Docs:** `AGENTS.md` (+ `CLAUDE.md` symlink), architecture, decisions, demo script (draft).
+- Protocol v1.0, Python reference verifier and shared test vectors are in `docs/ble-protocol.md`, `tools/` and `test/vectors/`.
+- Three instruments have 30 days of signed seed history in `assets/seed/`; `domain/` contains models, chain verification, threshold evaluation and gap detection.
+- `main.dart` now opens the collection dashboard. It loads the seed and starts a mock session for the Mittenwald violin; instrument cards open a detail screen with live readings, humidity charts for 24 h / 7 d / 30 d, gap marks and a signed event history.
+- Long-press the Aelos mark for mock impact, free-fall, drying, disconnect/reconnect and reset controls. Live impact and fall alerts open the takeover screen; reconnects show a dismissible "While you were away" card.
+- **Add an instrument** connects the illustrated onboarding, mock sensor pairing and certificate-style registration form. Profiles and optional photos are session-only; each registration gets its own test-only mock sensor key and starts a live session.
+- The design system, seed loader, in-memory providers and signed mock sensor are implemented. The dashboard and detail screen use those existing providers.
+- `fvm flutter analyze` is clean and `fvm flutter build web --dart-define=SENSOR=mock` succeeds.
+- The onboarding permission gateway is still a fake demo implementation. Passport export/import and verification screens are not implemented.
+- WebSocket and BLE transports are not implemented; `data/sensor_session.dart` currently throws for both. Android BLE and notification permissions remain to be added with BLE support.
 
-## Dev machine
+## Next
 
-- fvm is in `~/fvm/bin` (not on `PATH` by default). The Flutter SDK is at `.fvm/flutter_sdk`.
-- Android SDK is in `~/Android/Sdk` (platform 37, build-tools 36). Android Studio's JBR is at `~/android-studio/jbr`. The new Android CLI (`cmdline-tools/latest/bin/android`) replaces `sdkmanager`; pass `--no-metrics`. The first debug APK build is in progress (Gradle 9.3.1).
-- Android still needs Bluetooth and notification permissions in `AndroidManifest.xml` (see the `flutter_blue_plus` README). Add them with the BLE transport.
-
-## In progress
-
-- `feat/thresholds` (agent, PR #9): `domain/thresholds/`, `domain/history/`, `assets/config/thresholds.json`. Being changed to one alert per episode before merging.
-- `feat/onboarding` (agent): `features/onboarding/` (three illustrated pages, permissions page).
-
-## Next (build step 2)
-
-1. `data/` repositories and providers wiring seed, mock sensor, verification and thresholds together.
-2. Dashboard and instrument detail on the mock (charts with the 40–60 % band and hatched gaps).
-3. Step 3 hero moments: impact alert takeover, "While you were away", verification seal.
-
-## Known bugs
-
-None known.
-
-## To measure
-
-- Verification speed on the demo phone: run `verifyChain` over a 7-day bundle with `isolates: Platform.numberOfProcessors`. The desktop does it in 0.32 s. If the phone takes over ~1.5 s, shorten the default export range.
-- Web portal (phase two): pure-Dart Ed25519 compiled to JS and limited to one thread may be slow. Consider Web Crypto Ed25519 there.
+1. Build passport export, import and verification, including the visible tamper-failure state.
+2. Implement WebSocket and BLE transports and validate against the Pi.
+3. Start the web portal after the phone demo is polished.
 
 ## Open issues with aelos-backend
 
-- `aelos-backend` is empty as of 2026-10-23. Send the Pi developer `docs/ble-protocol.md` and `test/vectors/`.
-- The spec adds a `sync` control command that isn't in the original brief (see `docs/decisions.md`). Make sure the Pi developer knows about it.
+- The backend repo was empty as of 2026-10-23. Share `docs/ble-protocol.md` and `test/vectors/` with the Pi developer; the protocol includes a `sync` control command.
 
-## Repo notes
+## Demo machine
 
-- Branch per task off `main`; merge PRs with `gh pr merge --merge --delete-branch` once analyze and tests pass. Avoid stacking PRs: deleting a merged base branch closes the PRs stacked on it (that happened to #2).
+- FVM is at `~/fvm/bin` and the pinned Flutter SDK is 3.47.8. Android SDK is at `~/Android/Sdk`.
+- Seed and mock signing keys are test-only and must not be used for real instruments.
