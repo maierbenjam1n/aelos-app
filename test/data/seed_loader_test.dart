@@ -33,11 +33,14 @@ void main() {
   SeededInstrument byId(String id) =>
       seed.instruments.firstWhere((s) => s.instrument.id == id);
 
-  test('loads three instruments with 30 days of records, quickly', () {
+  test('loads six instruments with 30 or 14 days of records, quickly', () {
     expect(seed.instruments.map((s) => s.instrument.id), [
       'violin-mittenwald',
       'cello-mirecourt',
       'viola-cremona',
+      'violin-markneukirchen',
+      'cello-brunner',
+      'violin-mirecourt',
     ]);
     expect(seed.endTime, DateTime.utc(2026, 10, 24, 8));
 
@@ -45,16 +48,17 @@ void main() {
     expect(total, greaterThan(12000));
     expect(loadTime, lessThan(const Duration(seconds: 1)));
 
-    for (final s in seed.instruments) {
+    for (final (n, s) in seed.instruments.indexed) {
+      final full = n < 3;
       final records = s.records;
       expect(records.first.kind, RecordKind.boot);
       expect(records.first.seq, 1);
       expect(records.last.seq, records.length);
       final span = records.last.time.difference(records.first.time);
-      expect(span.inDays, 29);
+      expect(span.inDays, full ? 29 : 13);
       expect(seed.endTime.difference(records.last.time).inMinutes, lessThan(15));
       final readings = records.where((r) => r.kind == RecordKind.reading);
-      expect(readings.length, greaterThan(4200));
+      expect(readings.length, greaterThan(full ? 4200 : 1950));
       expect(records.first.raw, startsWith('{"k":"b","s":1,"sig":"'));
     }
   });
@@ -78,7 +82,7 @@ void main() {
       expect(File(i.photo!).existsSync(), isTrue, reason: i.photo);
     }
     final keys = seed.instruments.map((s) => s.instrument.sensorPublicKey);
-    expect(keys.toSet(), hasLength(3));
+    expect(keys.toSet(), hasLength(6));
   });
 
   test("the violin's sensor uses the test key", () {
