@@ -2,6 +2,15 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: Keep rejected live records in a separate audit incident list
+An incrementally rejected sensor record must remain visible for review without being mistaken for part of the verified condition history. The audit log records its sequence, rejection reason, receive time and raw JSON separately, and deduplicates repeats during reconnect replay. Rejected: inserting invalid input into the hash chain or dropping it after a console message.
+
+### 2026-10-24: Passport signatures cover sensor records, not the manifest
+The `.aelos` bundle carries the sensor's public key and chain context so every included record can be verified, including partial ranges. Instrument profile and range are owner-supplied metadata because the sensor has no signing API for them and the app has no account key. The PDF and verification screen state that boundary. Rejected: implying that the sensor cryptographically attests to maker, repairs, ownership, or export dates.
+
+### 2026-10-24: Registration gets a separate test-only mock sensor identity
+The seeded violin's mock connection already continues its signed history, so pairing another instrument to it would incorrectly give two instruments one key and chain. The registration flow creates a deterministic test-only mock key per new registration and hands that connection to the active session. Registration profile and photo bytes stay in memory, consistent with the demo's no-persistence scope. Rejected: reusing the seeded sensor (misrepresents ownership) and adding a database (outside the hackathon brief).
+
 ### 2026-10-24: Seed data signed offline, displayed with a time offset
 `tools/gen_seed.py` signs 30 days of history per instrument (ending 2026-10-24T08:00Z) with fixed TEST keys, so every rehearsal is identical and startup does no signing. The violin's sensor uses the protocol TEST key so the mock can continue its chain (`test/sensor/mock_continues_seed_test.dart`). Signed timestamps can't change, so the UI shifts display times by `appStart - seed.endTime`, and the mock signs in that same shifted timeline. Seed chains are trusted at startup, not re-verified (about 8 s on 4 isolates). Photos are CC0 Met Museum images (`assets/photos/CREDITS.md`).
 

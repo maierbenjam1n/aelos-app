@@ -1,6 +1,6 @@
 # features/onboarding
 
-`OnboardingScreen(onFinished: …)`: three illustrated pages (climate, impacts, a provable history), then a permissions page; `onFinished` fires from its Continue button and should hand over to pairing. It needs a `ProviderScope` above it. Not wired into `main.dart` yet.
+`OnboardingScreen(onFinished: …)`: three illustrated pages (climate, impacts, a provable history), then a permissions page; `onFinished` fires from its Continue button and hands over to pairing in `features/register/registration_flow.dart`. The intro is shown once per app session, before the first add-instrument flow.
 
 - `onboarding_art.dart`: the three illustrations, one `CustomPainter` each (f-hole with breathing humidity contours, f-hole with an impact ripple and a recording trace, a guilloché seal that stamps in). They draw in when their page becomes active, then loop (6–8 s); with `MediaQuery.disableAnimations` they hold one still frame.
 - `permissions_page.dart`: Bluetooth and notifications rows (to request / allowed / not allowed, with Allow or Retry). Continue never blocks, so a refused permission can't strand the demo.

@@ -16,7 +16,7 @@ fvm flutter pub get
 fvm flutter run --dart-define=SENSOR=mock                      # default, no hardware
 fvm flutter run --dart-define=SENSOR=ws --dart-define=PI_HOST=192.168.1.42
 fvm flutter run --dart-define=SENSOR=ble
-fvm flutter analyze && fvm flutter test                        # must pass before a PR
+fvm flutter analyze && fvm flutter test                        # both must pass before a PR (see Testing)
 python3 tools/gen_test_vectors.py                              # needs pynacl; output is deterministic
 fvm flutter test test/screenshots --update-goldens --dart-define=SCREENSHOTS=true  # renders screens to build/screens/ for review
 ```
@@ -42,6 +42,14 @@ fvm flutter test test/screenshots --update-goldens --dart-define=SCREENSHOTS=tru
 - `docs/decisions.md`: why things are the way they are. Add an entry for any significant choice.
 - `docs/handoff.md`: current state. **Claim a task under "In progress" before you start, and update the file at the end of every session or PR.**
 - `docs/demo-script.md`: the 3-minute demo
+
+## Testing: this is a demo
+
+Keep tests to the few places where a failure would ruin the demo, as the brief says (`prompt.md` section 10): canonical JSON and chain verification against `test/vectors/`, the threshold engine, gap detection, and the data path the demo relies on. **Don't add more tests.** No widget tests for new screens, no tests for layout or copy, no coverage goals. Check the look in screenshots or on the phone instead.
+
+- `fvm flutter analyze` must stay clean, and the existing tests must keep passing. Fix or delete a broken test; don't build new suites around it.
+- Screenshot tests in `test/screenshots/` are review tools, skipped by default. Add one only if you need to see a screen and have no device.
+- Spend the time on visual polish and on-stage reliability instead.
 
 ## Conventions
 

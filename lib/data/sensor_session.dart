@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../domain/models/audit_incident.dart';
+import '../domain/models/device_info.dart';
 import '../domain/models/live_reading.dart';
 import '../domain/models/sensor_record.dart';
 import '../domain/thresholds/alert.dart';
@@ -47,7 +49,9 @@ final sensorConnectionProvider = FutureProvider<SensorConnection>((ref) async {
       return mock;
     case SensorTransport.ws:
     case SensorTransport.ble:
-      throw UnimplementedError('${transport.name} transport arrives in build step 4');
+      throw UnimplementedError(
+        '${transport.name} transport arrives in build step 4',
+      );
   }
 });
 
@@ -98,14 +102,13 @@ final class SessionState {
     LiveReading? live,
     DateTime? lastSync,
     String? error,
-  }) =>
-      SessionState(
-        instrumentId: instrumentId,
-        status: status ?? this.status,
-        live: live ?? this.live,
-        lastSync: lastSync ?? this.lastSync,
-        error: error ?? this.error,
-      );
+  }) => SessionState(
+    instrumentId: instrumentId,
+    status: status ?? this.status,
+    live: live ?? this.live,
+    lastSync: lastSync ?? this.lastSync,
+    error: error ?? this.error,
+  );
 }
 
 final sessionProvider = NotifierProvider<SessionNotifier, SessionState?>(
@@ -142,19 +145,27 @@ class SessionNotifier extends Notifier<SessionState?> {
   final _replay = <SensorRecord>[];
   bool _syncing = false;
   bool _wasDisconnected = false;
+  bool _ownsConnection = false;
 
   Stream<Alert> get alertEvents => _alerts.stream;
 
   /// The mock, when it is the active transport, for the demo panel.
   MockSensorConnection? get mock => switch (_connection) {
-        final MockSensorConnection m => m,
-        _ => null,
-      };
+    final MockSensorConnection m => m,
+    _ => null,
+  };
 
   @override
   SessionState? build() {
     ref.onDispose(() {
+      final connection = _connection;
+      final ownsConnection = _ownsConnection;
       _stop();
+      if (ownsConnection && connection is MockSensorConnection) {
+        unawaited(connection.dispose());
+      } else if (connection != null) {
+        unawaited(connection.disconnect());
+      }
       unawaited(_alerts.close());
     });
     return null;
@@ -162,30 +173,87 @@ class SessionNotifier extends Notifier<SessionState?> {
 
   /// Starts the session for [instrumentId]. Pass [alreadyConnected] when the
   /// pairing screen has just connected the same transport.
-  Future<void> start(String instrumentId, {bool alreadyConnected = false}) async {
-    _stop();
+  Future<void> start(
+    String instrumentId, {
+    bool alreadyConnected = false,
+  }) async {
     final connection = await ref.read(sensorConnectionProvider.future);
+    await _startWith(
+      instrumentId,
+      connection,
+      alreadyConnected: alreadyConnected,
+    );
+  }
+
+  /// Starts a just-paired sensor session and takes ownership of mock sensors.
+  Future<void> startPaired(
+    String instrumentId,
+    SensorConnection connection,
+    DeviceInfo info,
+  ) => _startWith(
+    instrumentId,
+    connection,
+    alreadyConnected: true,
+    pairedInfo: info,
+    ownsConnection: connection is MockSensorConnection,
+  );
+
+  Future<void> _startWith(
+    String instrumentId,
+    SensorConnection connection, {
+    required bool alreadyConnected,
+    DeviceInfo? pairedInfo,
+    bool ownsConnection = false,
+  }) async {
     final data = ref.read(instrumentProvider(instrumentId));
     if (data == null) throw StateError('Unknown instrument $instrumentId');
+    final previous = _connection;
+    final previousOwned = _ownsConnection;
+    _stop();
+    await _queue;
+    if (previous != null && previous != connection) {
+      if (previousOwned && previous is MockSensorConnection) {
+        await previous.dispose();
+      } else {
+        await previous.disconnect();
+      }
+    }
+
     final last = data.records.lastOrNull;
     _connection = connection;
+    _ownsConnection = ownsConnection;
     _verifier = ChainVerifier(
       publicKey: base64Decode(data.instrument.sensorPublicKey),
       prevOfFirst: last == null ? null : recordHash(last.json),
       lastSeq: last?.seq,
     );
-    state = SessionState(instrumentId: instrumentId, status: ConnectionStatus.connecting);
+    state = SessionState(
+      instrumentId: instrumentId,
+      status: ConnectionStatus.connecting,
+    );
 
     _subscriptions
       ..add(connection.status.listen(_onStatus))
-      ..add(connection.records.listen((r) => _queue = _queue.then((_) => _onRecord(r))))
+      ..add(
+        connection.records.listen(
+          (r) => _queue = _queue.then((_) => _onRecord(r)),
+        ),
+      )
       ..add(connection.live.listen((l) => state = state?.copyWith(live: l)));
 
-    if (!alreadyConnected) {
-      final info = await connection.connect(data.instrument.sensorId);
-      if (info.publicKey != data.instrument.sensorPublicKey) {
+    if (alreadyConnected) {
+      if (pairedInfo != null &&
+          pairedInfo.publicKey != data.instrument.sensorPublicKey) {
+        throw StateError(
+          'The paired sensor key does not match this instrument',
+        );
+      }
+    } else {
+      final connectedInfo = await connection.connect(data.instrument.sensorId);
+      if (connectedInfo.publicKey != data.instrument.sensorPublicKey) {
         state = state?.copyWith(
-          error: 'This sensor signs with a different key than the one paired with '
+          error:
+              'This sensor signs with a different key than the one paired with '
               '${data.instrument.name}.',
         );
         await connection.disconnect();
@@ -217,18 +285,32 @@ class SessionNotifier extends Notifier<SessionState?> {
       // Only a drop from a live link counts; a new listener may first be told
       // the transport's idle state.
       case ConnectionStatus.disconnected
-          when previous == ConnectionStatus.connected || previous == ConnectionStatus.syncing:
+          when previous == ConnectionStatus.connected ||
+              previous == ConnectionStatus.syncing:
         _wasDisconnected = true;
       default:
     }
   }
 
   Future<void> _onRecord(SensorRecord record) async {
+    final instrumentId = state?.instrumentId;
+    if (instrumentId == null) return;
+
     // A repeated sync can replay records we already hold.
-    if (record.seq <= (_verifier!.lastSeq ?? 0)) return;
+    if (record.seq <= (_verifier!.lastSeq ?? 0)) {
+      final existing = ref
+          .read(instrumentProvider(instrumentId))
+          ?.records
+          .where((stored) => stored.seq == record.seq)
+          .firstOrNull;
+      if (existing != null && mapEquals(existing.json, record.json)) return;
+      _retainIntegrityIncident(record, instrumentId, ChainFailure.sequence);
+      return;
+    }
     final failure = await _verifier!.add(record.json);
     if (failure != null) {
-      // Never store what doesn't verify; the history must stay provable.
+      _retainIntegrityIncident(record, instrumentId, failure);
+      // Never store what doesn't verify; retain it separately for audit.
       debugPrint('Dropped record ${record.seq}: ${failure.name}');
       return;
     }
@@ -243,26 +325,52 @@ class SessionNotifier extends Notifier<SessionState?> {
     }
   }
 
+  void _retainIntegrityIncident(
+    SensorRecord record,
+    String instrumentId,
+    ChainFailure failure,
+  ) {
+    ref
+        .read(instrumentsProvider.notifier)
+        .appendIntegrityIncident(
+          AuditIncident(
+            instrumentId: instrumentId,
+            sequence: record.seq,
+            observedAt: DateTime.now().toUtc(),
+            failure: failure,
+            rawRecord: record.raw,
+          ),
+        );
+  }
+
   Future<void> _flushReplay() async {
     _syncing = false;
     if (_replay.isEmpty) return;
     final records = [..._replay];
     _replay.clear();
-    final alerts = ref.read(instrumentsProvider.notifier).append(state!.instrumentId, records);
+    final alerts = ref
+        .read(instrumentsProvider.notifier)
+        .append(state!.instrumentId, records);
     final humidity = [
       for (final r in records)
         if (r.tenthsHumidity != null) r.tenthsHumidity!,
     ];
     // A replay of just the boot record after a fresh start isn't news.
     if (records.length < 2 && alerts.isEmpty) return;
-    ref.read(awaySummaryProvider.notifier).show(
+    ref
+        .read(awaySummaryProvider.notifier)
+        .show(
           AwaySummary(
             instrumentId: state!.instrumentId,
             start: records.first.time,
             end: records.last.time,
             recordCount: records.length,
-            minTenthsHumidity: humidity.isEmpty ? null : humidity.reduce((a, b) => a < b ? a : b),
-            maxTenthsHumidity: humidity.isEmpty ? null : humidity.reduce((a, b) => a > b ? a : b),
+            minTenthsHumidity: humidity.isEmpty
+                ? null
+                : humidity.reduce((a, b) => a < b ? a : b),
+            maxTenthsHumidity: humidity.isEmpty
+                ? null
+                : humidity.reduce((a, b) => a > b ? a : b),
             alerts: summarizeReplay(alerts),
           ),
         );
@@ -277,5 +385,6 @@ class SessionNotifier extends Notifier<SessionState?> {
     _syncing = false;
     _wasDisconnected = false;
     _connection = null;
+    _ownsConnection = false;
   }
 }
