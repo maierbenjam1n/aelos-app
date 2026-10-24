@@ -20,6 +20,7 @@ import '../../domain/models/live_reading.dart';
 import '../../domain/models/sensor_record.dart';
 import '../../domain/thresholds/alert.dart';
 import '../../sensor/sensor_connection.dart';
+import '../passport/passport_export_screen.dart';
 
 class InstrumentDetailScreen extends ConsumerStatefulWidget {
   const InstrumentDetailScreen({super.key, required this.instrumentId});
@@ -34,6 +35,14 @@ class InstrumentDetailScreen extends ConsumerStatefulWidget {
 class _InstrumentDetailScreenState
     extends ConsumerState<InstrumentDetailScreen> {
   _HistoryRange _range = _HistoryRange.week;
+
+  void _openPassport() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => PassportExportScreen(instrumentId: widget.instrumentId),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +66,16 @@ class _InstrumentDetailScreenState
         ? session?.live
         : null;
     return Scaffold(
-      appBar: AppBar(title: const Text('Condition history')),
+      appBar: AppBar(
+        title: const Text('Condition history'),
+        actions: [
+          IconButton(
+            tooltip: 'Create condition passport',
+            onPressed: _openPassport,
+            icon: const Icon(Icons.ios_share_rounded),
+          ),
+        ],
+      ),
       body: _DetailBody(
         data: data,
         live: live,

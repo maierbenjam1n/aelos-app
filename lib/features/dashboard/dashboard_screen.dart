@@ -22,6 +22,7 @@ import '../../domain/models/live_reading.dart';
 import '../../domain/models/sensor_record.dart';
 import '../../sensor/sensor_connection.dart';
 import '../demo_panel/demo_panel.dart';
+import '../passport/passport_verify_screen.dart';
 import '../register/registration_flow.dart';
 import '../style_guide/style_guide_screen.dart';
 import 'instrument_detail_screen.dart';
@@ -78,6 +79,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  void _openPassportVerification() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const PassportVerifyScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final instruments = ref.watch(instrumentsProvider);
@@ -109,6 +116,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Verify a condition passport',
+            icon: const Icon(Icons.verified_outlined),
+            onPressed: _openPassportVerification,
+          ),
           IconButton(
             tooltip: 'Add an instrument',
             icon: const Icon(Icons.add_rounded),

@@ -2,6 +2,9 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: Passport signatures cover sensor records, not the manifest
+The `.aelos` bundle carries the sensor's public key and chain context so every included record can be verified, including partial ranges. Instrument profile and range are owner-supplied metadata because the sensor has no signing API for them and the app has no account key. The PDF and verification screen state that boundary. Rejected: implying that the sensor cryptographically attests to maker, repairs, ownership, or export dates.
+
 ### 2026-10-24: Registration gets a separate test-only mock sensor identity
 The seeded violin's mock connection already continues its signed history, so pairing another instrument to it would incorrectly give two instruments one key and chain. The registration flow creates a deterministic test-only mock key per new registration and hands that connection to the active session. Registration profile and photo bytes stay in memory, consistent with the demo's no-persistence scope. Rejected: reusing the seeded sensor (misrepresents ownership) and adding a database (outside the hackathon brief).
 
