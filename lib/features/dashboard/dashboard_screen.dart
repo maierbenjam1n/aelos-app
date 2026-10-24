@@ -2,32 +2,36 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/aelos_colors.dart';
 import '../../core/theme/aelos_type.dart';
-import '../../core/theme/theme_mode.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/aelos_card.dart';
 import '../../core/widgets/eyebrow.dart';
 import '../../core/widgets/f_hole.dart';
 import '../../core/widgets/hairline.dart';
+import '../../core/widgets/monogram.dart';
 import '../../core/widgets/reading_value.dart';
+import '../../core/widgets/role_motif.dart';
 import '../../core/widgets/status_badge.dart';
 import '../../data/accounts.dart';
 import '../../data/instrument_data.dart';
 import '../../data/instruments_notifier.dart';
 import '../../data/sensor_session.dart';
+import '../../domain/models/account.dart';
 import '../../domain/models/condition_status.dart';
 import '../../domain/models/live_reading.dart';
 import '../../domain/models/sensor_record.dart';
 import '../../sensor/sensor_connection.dart';
 import '../demo_panel/demo_panel.dart';
+import '../login/account_labels.dart';
+import '../login/account_menu.dart';
 import '../passport/passport_verify_screen.dart';
 import '../register/registration_flow.dart';
 import '../style_guide/style_guide_screen.dart';
 import 'instrument_detail_screen.dart';
-
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -69,7 +73,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final session = ref.watch(sessionProvider);
     final awaySummary = ref.watch(awaySummaryProvider);
     final colors = AelosColors.of(context);
-    final brightness = Theme.of(context).brightness;
+    final account = ref.watch(accountProvider);
+    final renting = account?.role == AccountRole.renter;
+    final rental = renting
+        ? ref
+              .watch(rentalsProvider)
+              .where((r) => r.renterId == account!.id)
+              .firstOrNull
+        : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -99,25 +110,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: const Icon(Icons.verified_outlined),
             onPressed: _openPassportVerification,
           ),
-          IconButton(
-            tooltip: 'Add an instrument',
-            icon: const Icon(Icons.add_rounded),
-            onPressed: _openRegistration,
-          ),
-          IconButton(
-            tooltip: 'Design system preview',
-            icon: const Icon(Icons.palette_outlined),
-            onPressed: _openStyleGuide,
-          ),
-          IconButton(
-            tooltip: 'Switch light and dark',
-            icon: Icon(
-              brightness == Brightness.dark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
+          // The luthier provides a renter's equipment.
+          if (!renting)
+            IconButton(
+              tooltip: 'Add an instrument',
+              icon: const Icon(Icons.add_rounded),
+              onPressed: _openRegistration,
             ),
-            onPressed: () =>
-                ref.read(themeModeProvider.notifier).toggle(brightness),
+          AccountButton(
+            actions: [
+              (
+                icon: Icons.palette_outlined,
+                label: 'Design system preview',
+                onTap: _openStyleGuide,
+              ),
+            ],
           ),
           const SizedBox(width: Space.s),
         ],
@@ -129,7 +136,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           awaySummary: awaySummary,
           startupError: null,
           onDismissAwaySummary: ref.read(awaySummaryProvider.notifier).dismiss,
-          onAddInstrument: _openRegistration,
+          onAddInstrument: renting ? null : _openRegistration,
+          rental: rental,
         ),
         error: (error, _) => _LoadFailure(error: error.toString()),
         loading: () => const _LoadingState(),
@@ -146,6 +154,7 @@ class _DashboardBody extends StatelessWidget {
     required this.startupError,
     required this.onDismissAwaySummary,
     required this.onAddInstrument,
+    this.rental,
   });
 
   final List<InstrumentData> instruments;
@@ -153,12 +162,18 @@ class _DashboardBody extends StatelessWidget {
   final AwaySummary? awaySummary;
   final String? startupError;
   final VoidCallback onDismissAwaySummary;
-  final VoidCallback onAddInstrument;
+
+  /// Null hides "Add an instrument": a renter's luthier provides equipment.
+  final VoidCallback? onAddInstrument;
+
+  /// The renter's rental; shows who manages the instrument.
+  final Rental? rental;
 
   @override
   Widget build(BuildContext context) {
     final colors = AelosColors.of(context);
     final text = Theme.of(context).textTheme;
+    final luthier = DemoDirectory.luthierById(rental?.luthierId);
     final activeInstrument = instruments
         .where((item) => item.id == session?.instrumentId)
         .firstOrNull;
@@ -214,13 +229,22 @@ class _DashboardBody extends StatelessWidget {
                 children: [
                   const Eyebrow('A record of care'),
                   const SizedBox(height: Space.s),
-                  Text('The collection', style: text.displayMedium),
+                  Text(
+                    luthier == null ? 'Your collection' : 'Your rental',
+                    style: text.displayMedium,
+                  ),
                   const SizedBox(height: Space.s),
                   Text(
-                    'A considered history for each instrument in your care.',
+                    luthier == null
+                        ? 'A considered history for each instrument in your care.'
+                        : 'Looked after together with your luthier.',
                     style: text.bodyLarge!.copyWith(color: colors.textMuted),
                   ),
                   const SizedBox(height: Space.xl),
+                  if (luthier != null) ...[
+                    _ManagedByCard(luthier: luthier, rental: rental!),
+                    const SizedBox(height: Space.l),
+                  ],
                   AelosCard(
                     padding: const EdgeInsets.symmetric(
                       horizontal: Space.l,
@@ -301,14 +325,18 @@ class _DashboardBody extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: Space.l),
-                  SizedBox(
-                    width: double.infinity,
-                    child: _AddInstrumentCard(onTap: onAddInstrument),
-                  ),
+                  if (onAddInstrument case final onAdd?) ...[
+                    const SizedBox(height: Space.l),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _AddInstrumentCard(onTap: onAdd),
+                    ),
+                  ],
                   const SizedBox(height: Space.xxl),
                   Text(
-                    'Each entry is kept as a signed condition history.',
+                    luthier == null
+                        ? 'Each entry is kept as a signed condition history.'
+                        : '${luthier.workshop} sees the same signed condition history.',
                     style: AelosText.of(context).note,
                   ),
                 ],
@@ -317,6 +345,266 @@ class _DashboardBody extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// For a renter: the workshop that provides and looks after the instrument.
+class _ManagedByCard extends StatelessWidget {
+  const _ManagedByCard({required this.luthier, required this.rental});
+
+  final Luthier luthier;
+  final Rental rental;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AelosColors.of(context);
+    final text = Theme.of(context).textTheme;
+
+    return AelosCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Space.l,
+              Space.l,
+              Space.l + 2,
+              Space.l,
+            ),
+            child: Row(
+              children: [
+                const SizedBox.square(
+                  dimension: 52,
+                  child: RoleMotif(AccountRole.renter, size: 52),
+                ),
+                const SizedBox(width: Space.l),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Eyebrow('Managed by', color: colors.accentInk),
+                      const SizedBox(height: Space.xs),
+                      Text(
+                        '${luthier.workshop} · ${luthier.city}',
+                        style: text.titleLarge,
+                      ),
+                      const SizedBox(height: 2),
+                      if (rental.plan case final plan?)
+                        Text(plan, style: text.bodySmall),
+                      if (rental.since case final since?)
+                        Text(
+                          'Renting since ${formatDay(since)}',
+                          style: text.bodySmall,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 0.8, color: colors.hairline),
+          InkWell(
+            onTap: () => unawaited(_showLuthierContact(context, luthier)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Space.l + 2,
+                vertical: Space.m + 2,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.forum_outlined,
+                    size: 20,
+                    color: colors.accent,
+                  ),
+                  const SizedBox(width: Space.m),
+                  Expanded(
+                    child: Text(
+                      'Contact your luthier',
+                      style: text.titleSmall!.copyWith(
+                        color: colors.accentInk,
+                      ),
+                    ),
+                  ),
+                  Text(luthier.master, style: text.bodySmall),
+                  const SizedBox(width: Space.xs),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: colors.textFaint,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _showLuthierContact(BuildContext context, Luthier luthier) =>
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: AelosColors.of(context).surfaceRaised,
+      builder: (_) => _LuthierContactSheet(luthier: luthier),
+    );
+
+class _LuthierContactSheet extends StatelessWidget {
+  const _LuthierContactSheet({required this.luthier});
+
+  final Luthier luthier;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          Space.page,
+          0,
+          Space.page,
+          Space.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Eyebrow('Your luthier'),
+            const SizedBox(height: Space.m),
+            Row(
+              children: [
+                Monogram(luthier.master, size: 52),
+                const SizedBox(width: Space.l),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(luthier.master, style: text.headlineSmall),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${luthier.workshop} · ${luthier.city}',
+                        style: text.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Space.l),
+            Text(
+              'Provided the sensor, sees the same signed history, and is the '
+              'first person to call after a knock or a fall.',
+              style: AelosText.of(context).note,
+            ),
+            const SizedBox(height: Space.l),
+            const Hairline(),
+            _CopyRow(
+              icon: Icons.call_outlined,
+              label: 'Telephone',
+              value: luthier.phone,
+            ),
+            const Hairline(),
+            _CopyRow(
+              icon: Icons.mail_outline_rounded,
+              label: 'Email',
+              value: luthier.email,
+            ),
+            const Hairline(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A contact detail that copies itself; the icon turns to a tick for a
+/// moment as confirmation, since a snackbar would sit behind the sheet.
+class _CopyRow extends StatefulWidget {
+  const _CopyRow({required this.icon, required this.label, required this.value});
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  State<_CopyRow> createState() => _CopyRowState();
+}
+
+class _CopyRowState extends State<_CopyRow> {
+  bool _copied = false;
+  Timer? _reset;
+
+  void _copy() {
+    unawaited(Clipboard.setData(ClipboardData(text: widget.value)));
+    setState(() => _copied = true);
+    _reset?.cancel();
+    _reset = Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _reset?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AelosColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: _copy,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: Space.m + 2),
+        child: Row(
+          children: [
+            Icon(widget.icon, size: 22, color: colors.accent),
+            const SizedBox(width: Space.l),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Eyebrow(widget.label),
+                  const SizedBox(height: Space.xs),
+                  Text(widget.value, style: text.titleMedium),
+                ],
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: Motion.medium,
+              switchInCurve: Motion.enter,
+              switchOutCurve: Motion.exit,
+              child: _copied
+                  ? Row(
+                      key: const ValueKey('copied'),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Copied',
+                          style: text.labelMedium!.copyWith(
+                            color: colors.calmInk,
+                          ),
+                        ),
+                        const SizedBox(width: Space.xs + 2),
+                        Icon(Icons.check_rounded, size: 18, color: colors.calm),
+                      ],
+                    )
+                  : Icon(
+                      Icons.copy_rounded,
+                      key: const ValueKey('copy'),
+                      size: 18,
+                      color: colors.textFaint,
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
