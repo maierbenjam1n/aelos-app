@@ -1,6 +1,6 @@
 # Handoff
 
-_Last updated 2026-10-24: the complete per-instrument audit log is connected._
+_Last updated 2026-10-24: the complete per-instrument audit log and pitch deck are ready._
 
 ## State
 
@@ -12,6 +12,7 @@ _Last updated 2026-10-24: the complete per-instrument audit log is connected._
 - Instrument details share a designed PDF and `.aelos` ZIP bundle (7 days by default, with 30-day and full-history ranges). The dashboard imports bundles and checks record shape, sequence, signatures and chain; it distinguishes valid histories with reading gaps and highlights the first tampered record.
 - Instrument details open a complete audit ledger with All / Climate / Events / Integrity filters, search, expandable signed JSON/signature/hash details, threshold rationale and a manual whole-chain signature check. Live records rejected by incremental verification are retained as deduplicated session-only incidents outside the signed history and shown in the ledger.
 - The design system, seed loader, in-memory providers and signed mock sensor are implemented. The dashboard and detail screen use those existing providers.
+- A 13-slide German pitch deck is available in `presentation/` as an interactive browser presentation and a static PDF; internal competitor notes are kept in `docs/presentation-business.md`.
 - `fvm flutter analyze` is clean and `fvm flutter build web --dart-define=SENSOR=mock` succeeds.
 - The onboarding permission gateway is still a fake demo implementation. Passport profile and range metadata are owner-supplied and are not sensor-signed.
 - WebSocket and BLE transports are not implemented; `data/sensor_session.dart` currently throws for both. Android BLE and notification permissions remain to be added with BLE support.
