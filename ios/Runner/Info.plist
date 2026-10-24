@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Aelos uses the camera to photograph your instrument when you document an impact or a fall.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aelos lets you choose photos of your instrument from your library to document an impact or a fall.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
