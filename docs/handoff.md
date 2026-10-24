@@ -17,6 +17,12 @@ _Last updated 2026-10-24: the complete per-instrument audit log is connected._
 - WebSocket and BLE transports are not implemented; `data/sensor_session.dart` currently throws for both. Android BLE and notification permissions remain to be added with BLE support.
 - Audit, registration and passport changes have not been covered by a new test run.
 
+## In progress
+
+- `feat/login` (agent): designed sign-in/role screen, renter touches on the dashboard (managed by the luthier, contact), sign-out.
+- `feat/event-report` (agent): guided event documentation (explanation, photo per angle with silhouette guide, review, submit).
+- `feat/luthier` (agent): luthier fleet dashboard, renters and assignment, fleet alerts, reports inbox and review, extra seeded rental instruments.
+
 ## Next
 
 1. Implement WebSocket and BLE transports and validate against the Pi.
