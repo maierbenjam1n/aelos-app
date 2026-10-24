@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../domain/models/audit_incident.dart';
 import '../domain/models/condition_status.dart';
 import '../domain/models/instrument.dart';
 import '../domain/models/sensor_record.dart';
@@ -137,6 +138,30 @@ class InstrumentsNotifier extends AsyncNotifier<List<InstrumentData>> {
     );
     state = AsyncData([...current]..[index] = updated);
     return alerts;
+  }
+
+  /// Retains a rejected sensor record outside the signed history for review.
+  void appendIntegrityIncident(AuditIncident incident) {
+    final current = state.value;
+    if (current == null) return;
+    final index = current.indexWhere(
+      (item) => item.id == incident.instrumentId,
+    );
+    if (index < 0) return;
+    final data = current[index];
+    final alreadyRecorded = data.integrityIncidents.any(
+      (existing) =>
+          existing.sequence == incident.sequence &&
+          existing.failure == incident.failure &&
+          existing.rawRecord == incident.rawRecord,
+    );
+    if (alreadyRecorded) return;
+    state = AsyncData(
+      [...current]
+        ..[index] = data.copyWith(
+          integrityIncidents: [...data.integrityIncidents, incident],
+        ),
+    );
   }
 
   /// Adds a newly paired instrument to this session's in-memory collection.

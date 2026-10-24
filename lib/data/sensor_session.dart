@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../domain/models/audit_incident.dart';
 import '../domain/models/device_info.dart';
 import '../domain/models/live_reading.dart';
 import '../domain/models/sensor_record.dart';
@@ -292,11 +293,24 @@ class SessionNotifier extends Notifier<SessionState?> {
   }
 
   Future<void> _onRecord(SensorRecord record) async {
+    final instrumentId = state?.instrumentId;
+    if (instrumentId == null) return;
+
     // A repeated sync can replay records we already hold.
-    if (record.seq <= (_verifier!.lastSeq ?? 0)) return;
+    if (record.seq <= (_verifier!.lastSeq ?? 0)) {
+      final existing = ref
+          .read(instrumentProvider(instrumentId))
+          ?.records
+          .where((stored) => stored.seq == record.seq)
+          .firstOrNull;
+      if (existing != null && mapEquals(existing.json, record.json)) return;
+      _retainIntegrityIncident(record, instrumentId, ChainFailure.sequence);
+      return;
+    }
     final failure = await _verifier!.add(record.json);
     if (failure != null) {
-      // Never store what doesn't verify; the history must stay provable.
+      _retainIntegrityIncident(record, instrumentId, failure);
+      // Never store what doesn't verify; retain it separately for audit.
       debugPrint('Dropped record ${record.seq}: ${failure.name}');
       return;
     }
@@ -309,6 +323,24 @@ class SessionNotifier extends Notifier<SessionState?> {
     for (final alert in notifier.append(state!.instrumentId, [record])) {
       _alerts.add(alert);
     }
+  }
+
+  void _retainIntegrityIncident(
+    SensorRecord record,
+    String instrumentId,
+    ChainFailure failure,
+  ) {
+    ref
+        .read(instrumentsProvider.notifier)
+        .appendIntegrityIncident(
+          AuditIncident(
+            instrumentId: instrumentId,
+            sequence: record.seq,
+            observedAt: DateTime.now().toUtc(),
+            failure: failure,
+            rawRecord: record.raw,
+          ),
+        );
   }
 
   Future<void> _flushReplay() async {

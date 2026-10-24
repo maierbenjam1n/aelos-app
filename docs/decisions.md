@@ -2,6 +2,9 @@
 
 Newest first. Date, decision, why, alternatives rejected.
 
+### 2026-10-24: Keep rejected live records in a separate audit incident list
+An incrementally rejected sensor record must remain visible for review without being mistaken for part of the verified condition history. The audit log records its sequence, rejection reason, receive time and raw JSON separately, and deduplicates repeats during reconnect replay. Rejected: inserting invalid input into the hash chain or dropping it after a console message.
+
 ### 2026-10-24: Passport signatures cover sensor records, not the manifest
 The `.aelos` bundle carries the sensor's public key and chain context so every included record can be verified, including partial ranges. Instrument profile and range are owner-supplied metadata because the sensor has no signing API for them and the app has no account key. The PDF and verification screen state that boundary. Rejected: implying that the sensor cryptographically attests to maker, repairs, ownership, or export dates.
 

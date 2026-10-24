@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../domain/models/audit_incident.dart';
 import '../domain/models/condition_status.dart';
 import '../domain/models/instrument.dart';
 import '../domain/models/sensor_record.dart';
@@ -17,6 +18,7 @@ final class InstrumentData {
     required this.displayOffset,
     this.tighterLimitsReason,
     this.photoBytes,
+    this.integrityIncidents = const [],
   });
 
   final Instrument instrument;
@@ -39,6 +41,9 @@ final class InstrumentData {
   /// An optional user-selected photo kept in memory for this session.
   final Uint8List? photoBytes;
 
+  /// Untrusted sensor records rejected by the incremental verifier.
+  final List<AuditIncident> integrityIncidents;
+
   String get id => instrument.id;
 
   SensorRecord? get latestReading {
@@ -59,6 +64,7 @@ final class InstrumentData {
     List<Alert>? alerts,
     ConditionStatus? status,
     ThresholdState? thresholdState,
+    List<AuditIncident>? integrityIncidents,
   }) => InstrumentData(
     instrument: instrument,
     records: records ?? this.records,
@@ -68,5 +74,6 @@ final class InstrumentData {
     displayOffset: displayOffset,
     tighterLimitsReason: tighterLimitsReason,
     photoBytes: photoBytes,
+    integrityIncidents: integrityIncidents ?? this.integrityIncidents,
   );
 }

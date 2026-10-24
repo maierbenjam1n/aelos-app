@@ -7,12 +7,13 @@
 | 0:00 | Collection dashboard | "A considered condition record for every instrument in your care." | Point out the seeded violin, cello and viola. |
 | 0:15 | Onboarding, then pairing | "A small sensor lives in the case. It signs every record." | Tap **Add an instrument**. Continue through onboarding and permissions, then select the discovered mock sensor. |
 | 0:45 | Instrument certificate | "We begin with what the owner knows about the instrument." | Enter a name and year, choose materials, optionally attach a photo, then add it to the collection. |
-| 1:05 | Seeded violin detail | "The older profile has tighter climate limits, and its history shows where readings stopped." | Return to the collection, open the Mittenwald violin, and show the 30-day chart and timeline. |
-| 1:25 | Impact alert takeover | "A knock becomes a signed event in the condition history." | Long-press the Aelos mark → **Impact**. |
-| 1:45 | Reconnect summary | "When the phone comes back in range, it catches up on signed records." | Long-press the mark → **Disconnect**; trigger an impact while away; reopen the panel → **Reconnect**. |
-| 2:05 | Passport share | "This history travels with the instrument." | Open the violin detail → share icon → choose **30 days** → share the PDF and `.aelos` bundle. |
-| 2:30 | Verification seal | "The bundle checks each signature and the chain between records." | Return to the dashboard → shield icon → select the `.aelos` file. The seeded 30-day history should show **Verified with gaps**. |
-| 2:50 | Collection | Close with who the app serves. | Return to the collection. |
+| 1:05 | Seeded violin detail | "The older profile has tighter climate limits, and its history shows where readings stopped." | Return to the collection, open the Mittenwald violin, and show the 30-day chart and recent timeline. |
+| 1:20 | Full audit log | "Every reading and event can be traced to its signed record, and we can check the entire chain." | Tap the receipt icon → **Climate** → expand a reading → **Check chain**. |
+| 1:40 | Impact alert takeover | "A knock becomes a signed event in the condition history." | Long-press the Aelos mark → **Impact**. |
+| 1:55 | Reconnect summary | "When the phone comes back in range, it catches up on signed records." | Long-press the mark → **Disconnect**; trigger an impact while away; reopen the panel → **Reconnect**. |
+| 2:15 | Passport share | "This history travels with the instrument." | Open the violin detail → share icon → choose **30 days** → share the PDF and `.aelos` bundle. |
+| 2:35 | Verification seal | "The bundle checks each signature and the chain between records." | Return to the dashboard → shield icon → select the `.aelos` file. The seeded 30-day history should show **Verified with gaps**. |
+| 2:55 | Collection | Close with who the app serves. | Return to the collection. |
 
 ## Tamper demonstration
 

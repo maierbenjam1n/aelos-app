@@ -20,6 +20,7 @@ import '../../domain/models/live_reading.dart';
 import '../../domain/models/sensor_record.dart';
 import '../../domain/thresholds/alert.dart';
 import '../../sensor/sensor_connection.dart';
+import '../audit/audit_log_screen.dart';
 import '../passport/passport_export_screen.dart';
 
 class InstrumentDetailScreen extends ConsumerStatefulWidget {
@@ -40,6 +41,14 @@ class _InstrumentDetailScreenState
     Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => PassportExportScreen(instrumentId: widget.instrumentId),
+      ),
+    );
+  }
+
+  void _openAuditLog() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => AuditLogScreen(instrumentId: widget.instrumentId),
       ),
     );
   }
@@ -69,6 +78,11 @@ class _InstrumentDetailScreenState
       appBar: AppBar(
         title: const Text('Condition history'),
         actions: [
+          IconButton(
+            tooltip: 'Open full audit log',
+            onPressed: _openAuditLog,
+            icon: const Icon(Icons.receipt_long_rounded),
+          ),
           IconButton(
             tooltip: 'Create condition passport',
             onPressed: _openPassport,
